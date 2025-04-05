@@ -31,7 +31,7 @@ int main (void) {
 	printf("%s", GREEN);
 	printf("\t\t\t\tCONWAYS GAME OF LIFE v1\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n\n\n");
-	printx(false, true, true, false, "RULES\n");
+	printx(false, true, true, false, "RULES\n"); // ARGS: Italic?, Underlined?, Bold?, Strikethrough?, Text
 	printf(" 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation. \n \
 2. Any live cell with two or three live neighbours lives on to the next generation. \n \
 3. Any live cell with more than three live neighbours dies, as if by overpopulation. \n \
