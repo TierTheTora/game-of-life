@@ -5,3 +5,7 @@
 3. Any live cell with more than three live neighbours dies, as if by overpopulation.
 4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
    - ([source](https://rustwasm.github.io/book/game-of-life/rules.html))
+  
+## Symbols
+- #: Alive cell
+- .: Dead cell
