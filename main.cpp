@@ -8,9 +8,9 @@
 
 // Globals
 
-const uint8_t ROWS = 10;
-const uint8_t COLS = 10;
-const int     SIZE = ROWS * COLS;
+const uint8_t ROWS = 20;
+const uint8_t COLS = 20;
+const int     BOARD_SIZE = ROWS * COLS;
 
 // Functions
 
@@ -24,14 +24,21 @@ int main (void) {
 
 	int CELLS;
 
-	char BOARD[SIZE + 1];
-	memset(BOARD, '.', SIZE); // Set the BOARD to be just dots (dead cell)
-	BOARD[SIZE] = '\0';
-	
+	char BOARD[BOARD_SIZE + 1];
+	memset(BOARD, '.', BOARD_SIZE); // Set the BOARD to be just dots (dead cell)
+	BOARD[BOARD_SIZE] = '\0';
+#if LINUX	
 	printf("%s", GREEN);
+#elif WIN
+	setColour(WIN_GREEN);
+#endif
 	printf("\t\t\t\tCONWAYS GAME OF LIFE v1\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n\n\n");
-	printx(false, true, true, false, "RULES\n"); // ARGS: Italic?, Underlined?, Bold?, Strikethrough?, Text
+#if LINUX
+	printx(false, true, true, false, "RULES\n");
+#elif WIN
+	printf("RULES\n");
+#endif
 	printf(" 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation. \n \
 2. Any live cell with two or three live neighbours lives on to the next generation. \n \
 3. Any live cell with more than three live neighbours dies, as if by overpopulation. \n \
@@ -40,9 +47,13 @@ int main (void) {
 
 	std::cin >> CELLS;
 
-	if (CELLS > SIZE) {
+	if (CELLS > BOARD_SIZE) {
+#if LINUX
 		printf("%s", RED);
-		fprintf(stderr, "Number of Cells can not be greater than %d.\n", SIZE);
+#elif WIN
+		setColour(WIN_RED);
+#endif
+		fprintf(stderr, "Number of Cells can not be greater than %d.\n", BOARD_SIZE);
 		exit(1);
 	}
 
@@ -51,16 +62,29 @@ int main (void) {
 		printf("Grid position of Cell #%d: ", i+1);
 		std::cin >> COORD;
 		BOARD[COORD-1] = '#'; // Set the baord at the user input to be an alive cell 
-		for (int j = 0; j < SIZE; ++j) {
+		for (int j = 0; j < BOARD_SIZE; ++j) {
+#if LINUX
 			printf("%s", GREY);
 			if (BOARD[j] == '#') printf("%s", YELLOW);
+#elif WIN
+			setColour(WIN_GREY);
+			if (BOARD[j] == '#') setColour(WIN_YELLOW);
+#endif
 			printf("%c ", BOARD[j]);
+#if LINUX
 			printf("%s", GREY);
+#elif WIN
+			setColour(WIN_GREY);
+#endif
 			if ((j + 1) % ROWS == 0) {
 				printf("\n");
 			}
 		}
-		printf("%s%s", BRESET, GREEN);
+#if LINUX
+		printf("%s", GREEN);
+#elif WIN
+		setColour(WIN_GREEN);
+#endif
 		printf("\n");
 	}
 
@@ -71,17 +95,20 @@ int main (void) {
 		update(BOARD);
 	}
 	else exit(0);
-
-	printf("%s%s", BRESET, RESET);
+#if LINUX
+	printf("%s", RESET);
+#elif WIN
+	setColour(WIN_RESET);
+#endif
 }
 
 void update (char * BOARD) {
 	clear();
-	char newBoard[SIZE + 1];
-	newBoard[SIZE] = '\0';
+	char newBoard[BOARD_SIZE + 1];
+	newBoard[BOARD_SIZE] = '\0';
 
 	while (true) {
-		for (int i = 0; i < SIZE; ++i) {
+		for (int i = 0; i < BOARD_SIZE; ++i) {
 			int neighbours = countNeighbours(BOARD, i);
 			if (BOARD[i] == '#') {
 				newBoard[i] = (neighbours == 2 || neighbours == 3) ? '#' : '.';
@@ -90,18 +117,26 @@ void update (char * BOARD) {
 				newBoard[i] = (neighbours == 3) ? '#' : '.';
 			}
 		}
-		memcpy(BOARD, newBoard, SIZE);
+		memcpy(BOARD, newBoard, BOARD_SIZE);
 		clear();
-		for (int j = 0; j < SIZE; ++j) {
+		for (int j = 0; j < BOARD_SIZE; ++j) {
+#if LINUX
 			printf("%s", GREY);
 			if (BOARD[j] == '#') printf("%s", YELLOW);
+#elif WIN
+			setColour(WIN_GREY);
+			if (BOARD[j] == '#') setColour(WIN_YELLOW);
+#endif
 			printf("%c ", BOARD[j]);
+#if LINUX
 			printf("%s", GREY);
+#elif WIN
+			setColour(WIN_GREY);
+#endif
 			if ((j + 1) % ROWS == 0) {
 				printf("\n");
 			}
 		}
-		printf("%s", BRESET);
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 }

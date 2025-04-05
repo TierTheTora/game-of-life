@@ -1,25 +1,42 @@
 #include <stdlib.h>
 #include <string.h>
 
-// FOREGROUND CONSOLE COLOURS
+#define WIN   defined(_WIN32) || defined(_WIN64)
+#define LINUX defined(__unix__) || defined(__linux__) || defined(__APPLE__) || defined(__MACH__)
 
+#if WIN
+#include <windows.h>
+#endif
+
+// FOREGROUND CONSOLE COLOURS
+#if LINUX
 	const char * RED    = "\033[31m";
 	const char * YELLOW = "\033[33m";
 	const char * GREY   = "\033[30m";
 	const char * GREEN  = "\033[32m";
-	const char * RESET  = "\033[0m";
+	const char * RESET  = "\033[00m";
+#elif WIN
+	const int WIN_RED    = 4;
+	const int WIN_YELLOW = 14;
+	const int WIN_GREY   = 8;
+	const int WIN_GREEN  = 2;
+	const int WIN_RESET  = 15;
 
-// BACKGROUND CONSOLE COLOURS
-
-	const char * BGREY  = "\033[40m";
-	const char * BRESET = "\033[49m";
+	void setColour (int colour) {
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colour);
+	}
+#endif
 
 // FUNCTIONS
 
 int clear() {
+#if LINUX
 	return system("clear");
+#elif WIN
+	return system("cls");
+#endif
 }
-
+#if LINUX
 void printx (const bool it, const bool un, const bool bd, const bool st, const char * TEXT) {
 	if (it) printf("\e[3m");
 	if (un) printf("\e[4m");
@@ -27,3 +44,4 @@ void printx (const bool it, const bool un, const bool bd, const bool st, const c
 	if (st) printf("\e[9m");
 	printf("%s\e[23m\e[22m\e[24m\e[29m", TEXT);
 }
+#endif
