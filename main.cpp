@@ -112,7 +112,7 @@ int main (void) {
 	setColour(WIN_GREEN);
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v1\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n\n\n");
 
 	while (true) { // Console prompt loop
