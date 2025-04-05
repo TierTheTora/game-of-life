@@ -10,12 +10,14 @@
 
 // FOREGROUND CONSOLE COLOURS
 #if LINUX
+	// Linux terminal ANSII codes
 	const char * RED    = "\033[31m";
 	const char * YELLOW = "\033[33m";
 	const char * GREY   = "\033[30m";
 	const char * GREEN  = "\033[32m";
 	const char * RESET  = "\033[00m";
 #elif WIN
+	// Windows colour values
 	const int WIN_RED    = 4;
 	const int WIN_YELLOW = 14;
 	const int WIN_GREY   = 8;
@@ -23,7 +25,7 @@
 	const int WIN_RESET  = 15;
 
 	void setColour (int colour) {
-		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colour);
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colour); // Set colour on windwos
 	}
 #endif
 
