@@ -7,7 +7,7 @@
 	const char * YELLOW = "\033[33m";
 	const char * GREY   = "\033[30m";
 	const char * GREEN  = "\033[32m";
-	const char * RESET  = "\033[00m";
+	const char * RESET  = "\033[0m";
 
 // BACKGROUND CONSOLE COLOURS
 
