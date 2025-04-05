@@ -1,4 +1,4 @@
-# Conways Game of Life (Linux)
+# Conways Game of Life (Linux and Windows)
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
