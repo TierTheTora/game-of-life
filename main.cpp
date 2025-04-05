@@ -5,6 +5,8 @@
 #include <string.h>
 #include <chrono>
 #include <thread>
+#include <regex>
+#include <string>
 
 // Globals
 
@@ -16,88 +18,113 @@ const int     BOARD_SIZE = ROWS * COLS;
 
 int  countNeighbours (const char* BOARD, int i);
 void update          (char * BOARD);
+void displayBoard    (char * BOARD);
+
+// Classes
+
+class Command {
+	public:
+	void command(char * cmd, char * BOARD) {
+		// Trim spaces
+		int i = 0, j = 0;
+		while (cmd[i]) {
+			if (cmd[i] != ' ') {
+				cmd[j++] = cmd[i];
+			}
+			i++;
+		}
+		cmd[j] = '\0';
+		for (int k = 0; cmd[k]; ++k) { // Convert cmd to be lowercase
+			cmd[k] = tolower(cmd[k]);
+		}
+		if (strcmp(cmd, "help") == 0) {
+			#if LINUX
+			printx(false, true, true, false, "RULES\n");
+			#elif WIN
+			printf("RULES\n");
+			#endif
+			printf(" 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation. \n \
+2. Any live cell with two or three live neighbours lives on to the next generation. \n \
+3. Any live cell with more than three live neighbours dies, as if by overpopulation. \n \
+4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.\n\n");
+			#if LINUX
+			printx(false, true, true, false, "COMMANDS\n");
+			#elif WIN
+			printf("COMMANDS\n");
+			#endif
+			printf(" 1. +<int> : Make a cell alive on the board \n \ 
+2. -<int> : Make a cell dead on the board \n \
+3. board  : Show the current game board \n \
+4. run    : Run the simulation\n\n");
+		}
+		else if (strcmp(cmd, "board") == 0) {
+			displayBoard(BOARD);
+		}
+		else if (strcmp(cmd, "run") == 0) {
+			update(BOARD);
+		}
+		{
+			std::regex pattern("^\\+([0-9]+)$");
+			std::smatch match;
+			std::string cmdStr(cmd);
+		
+			if (std::regex_match(cmdStr, match, pattern)) {
+				int number = std::stoi(match[1].str());
+				if (number >= 0 && number < BOARD_SIZE) {
+					BOARD[number-1] = '#';
+				}
+				else {
+					printf("Number out of bounds.");
+				}
+			}
+		}
+		{
+			std::regex pattern("^\\-([0-9]+)$");
+			std::smatch match;
+			std::string cmdStr(cmd);
+		
+			if (std::regex_match(cmdStr, match, pattern)) {
+				int number = std::stoi(match[1].str());
+				if (number >= 0 && number < BOARD_SIZE) {
+					BOARD[number-1] = '.';
+				}
+				else {
+					printf("Number out of bounds.");
+				}
+			}
+		}
+	}
+};
 
 // Main code
 
 int main (void) {
 	clear();
 
-	int CELLS;
 
 	char BOARD[BOARD_SIZE + 1];
 	memset(BOARD, '.', BOARD_SIZE); // Set the BOARD to be just dots (dead cell)
 	BOARD[BOARD_SIZE] = '\0';
+
 	#if LINUX	
 	printf("%s", GREEN);
 	#elif WIN
 	setColour(WIN_GREEN);
 	#endif
+
 	printf("\t\t\t\tCONWAYS GAME OF LIFE v1\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n\n\n");
-	#if LINUX
-	printx(false, true, true, false, "RULES\n");
-	#elif WIN
-	printf("RULES\n");
-	#endif
-	printf(" 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation. \n \
-2. Any live cell with two or three live neighbours lives on to the next generation. \n \
-3. Any live cell with more than three live neighbours dies, as if by overpopulation. \n \
-4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.\n\n");
-	printf("Number of Cells: ");
 
-	std::cin >> CELLS;
-
-	if (CELLS > BOARD_SIZE) { // If there are more cells than cells available
-		#if LINUX
-		printf("%s", RED);
-		#elif WIN
-		setColour(WIN_RED);
-		#endif
-		fprintf(stderr, "Number of Cells can not be greater than %d.\n", BOARD_SIZE);
-		exit(1);
+	while (true) { // Console prompt loop
+		char cmd[1024];
+		printf("> ");
+		std::cin >> cmd;
+		Command* command = new Command();
+		command->command(cmd, BOARD);
+		//displayBoard(BOARD);
 	}
 
-	for (int i = 0; i < CELLS; ++i) { // Ask for cell position `CELL` amount of times
-		int COORD;
-
-		printf("Grid position of Cell #%d: ", i+1);
-		std::cin >> COORD;
-
-		BOARD[COORD-1] = '#'; // Set the baord at the user input to be an alive cell 
 	
-		for (int j = 0; j < BOARD_SIZE; ++j) { // Iterate through each cell
-			#if LINUX
-			printf("%s", GREY);
-			if (BOARD[j] == '#') printf("%s", YELLOW);
-			#elif WIN
-			setColour(WIN_GREY);
-			if (BOARD[j] == '#') setColour(WIN_YELLOW);
-			#endif
-			printf("%c ", BOARD[j]);
-			#if LINUX
-			printf("%s", GREY);
-			#elif WIN
-			setColour(WIN_GREY);
-			#endif
-			if ((j + 1) % ROWS == 0) { // If we are at the end of the first row
-				printf("\n");
-			}
-		}
-		#if LINUX
-		printf("%s", GREEN);
-		#elif WIN
-		setColour(WIN_GREEN);
-		#endif
-		printf("\n");
-	}
-
-	char conf[1];
-	printf("Ready? (y/n) "); // Game start confirmation
-	std::cin >> conf;
-	if (tolower(conf[0]) == 'y') {
-		update(BOARD);
-	}
-	else exit(0);
 	#if LINUX
 	printf("%s", RESET);
 	#elif WIN
@@ -122,24 +149,7 @@ void update (char * BOARD) {
 		}
 		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
 		clear();
-		for (int j = 0; j < BOARD_SIZE; ++j) { // Write the new board to the screen
-			#if LINUX
-			printf("%s", GREY);
-			if (BOARD[j] == '#') printf("%s", YELLOW);
-			#elif WIN
-			setColour(WIN_GREY);
-			if (BOARD[j] == '#') setColour(WIN_YELLOW);
-			#endif
-			printf("%c ", BOARD[j]);
-			#if LINUX
-			printf("%s", GREY);
-			#elif WIN
-			setColour(WIN_GREY);
-			#endif
-			if ((j + 1) % ROWS == 0) {
-				printf("\n");
-			}
-		}
+		displayBoard(BOARD);
 		std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait 1 second
 	}
 }
@@ -162,4 +172,31 @@ int countNeighbours (const char * BOARD, int i) {
 		}
 	}
 	return count;
+}
+
+void displayBoard (char * BOARD) {
+	for (int j = 0; j < BOARD_SIZE; ++j) { // Iterate through each cell
+		#if LINUX
+		printf("%s", GREY);
+		if (BOARD[j] == '#') printf("%s", YELLOW);
+		#elif WIN
+		setColour(WIN_GREY);
+		if (BOARD[j] == '#') setColour(WIN_YELLOW);
+		#endif
+		printf("%c ", BOARD[j]);
+		#if LINUX
+		printf("%s", GREY);
+		#elif WIN
+		setColour(WIN_GREY);
+		#endif
+		if ((j + 1) % ROWS == 0) { // If we are at the end of the first row
+			printf("\n");
+		}
+	}
+	printf("\n");
+	#if LINUX
+	printf("%s", GREEN);
+	#elif WIN 
+	setColour(WIN_GREEN);
+	#endif
 }
