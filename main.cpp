@@ -13,21 +13,24 @@
 
 // Globals
 
-const uint8_t ROWS       = 20;
-const uint8_t COLS       = 20;
-const int     BOARD_SIZE = ROWS * COLS;
-int           SPEED      = 500;
+uint8_t            ROWS       = 20;
+uint8_t            COLS       = 20;
+int                BOARD_SIZE = ROWS * COLS;
+int                SPEED      = 500;
+unsigned long long GEN        = 0;
+int                ALIVE      = 0;
 
 // Functions
 
 int  countNeighbours (const char* BOARD, int i);
 void update          (char * BOARD);
 void displayBoard    (char * BOARD);
+void step            (char * BOARD, int i);
 
 // Classes
 
 namespace Command {
-	void command(std::string cmd, char * BOARD) {
+	void command(std::string cmd, char ** BOARD) {
 		// Trim spaces
 		cmd.erase(std::remove_if(cmd.begin(), cmd.end(), ::isspace), cmd.end()); // Removes the spaces
 		// Convert cmd to be lowercase
@@ -49,20 +52,25 @@ namespace Command {
 			#elif WIN
 				printf("COMMANDS\n");
 			#endif
-			printf(" 1. +<int>,<int> : Make a cell alive on the board \n \
-2. -<int>,<int> : Make a cell dead on the board \n \
-3. board        : Show the current game board \n \
-4. run          : Run the simulation\n \
-4. read         : Read a script file\n \
-5. speed=<int>  : Set the game speed (ms)\n\n");
+			printf(" 1. +<int>,<int>      : Make a cell alive on the board \n \
+2. -<int>,<int>      : Make a cell dead on the board \n \
+3. board             : Show the current game board \n \
+4. run               : Run the simulation\n \
+4. load              : Read a script file\n \
+5. speed=<int>       : Set the game speed (ms)\n \
+6. size=<int>,<int>  : Set board size (MAX: 255x255)\n \
+7. exit/quit         : Exit the programm\n \
+8. stat              : Show information on the board\n \
+9. step <int>        : Step forward a given amount of generations\n \
+\n\n");
 		}
 		else if (cmd == "board") {
-			displayBoard(BOARD);
+			displayBoard(*BOARD);
 		}
 		else if (cmd == "run") {
-			update(BOARD);
+			update(*BOARD);
 		}
-		else if (cmd == "read") {
+		else if (cmd == "load") {
 			printf("File name: ");
 			std::string file;
 			std::getline(std::cin, file); // Get file name
@@ -75,12 +83,50 @@ namespace Command {
 			}
 			read.close();
 		}
+		else if (cmd == "clear") {
+			memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+		}
+		else if (cmd == "exit" || cmd == "quit") {
+			#if LINUX
+				printf("%s", RESET);
+			#elif WIN
+				setColour(static_cast<int>(Colour::WIN_RESET));
+			#endif
+			delete[] *BOARD;
+			exit(0);
+		}
 		else if (cmd[0] == 's') { // First character of 'speed'
+			if (cmd == "stat") {
+				for (int i = 0; i < BOARD_SIZE; ++i) { // Iterate thrugh board
+					if ((*BOARD)[i] == static_cast<char>(State::Alive)) { // If cell is alive
+						++ALIVE;
+					}
+				}
+				printf("Generation: %Ld\n", GEN);
+				printf("Alive cells: %d\n", ALIVE);
+			}
 			std::regex pattern("^speed=([0-9]+)$");
+			std::regex ptrn("^size=([0-9]+),([0-9]+)$");
+			std::regex ptrn2("^step([0-9]+)$");
 			std::smatch match;
 
 			if (std::regex_match(cmd, match, pattern)) {
 				SPEED = std::stoi(match[1].str());
+			}
+			else if (regex_match(cmd, match, ptrn)) {
+				ROWS = std::stoi(match[1].str());
+				COLS = std::stoi(match[2].str());
+				BOARD_SIZE = ROWS * COLS;
+				
+				delete[] *BOARD; // Delete old board
+				
+				*BOARD = new char[BOARD_SIZE + 1];
+				memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+				(*BOARD)[BOARD_SIZE] = '\0';
+			}
+			else if (regex_match(cmd, match, ptrn2)) {
+				int i = std::stoi(match[1].str());
+				step(*BOARD, i);
 			}
 		}
 		else if (cmd[0] == '+') {
@@ -93,7 +139,7 @@ namespace Command {
 				int index = (row-1) + ((col-1) * COLS);
 
 				if (row >= 1 && row < ROWS && col >= 1 && col < COLS) {
-					BOARD[index] = static_cast<char>(State::Alive);
+					(*BOARD)[index] = static_cast<char>(State::Alive);
 				}
 				else {
 					#if LINUX
@@ -115,14 +161,13 @@ namespace Command {
 		else if (cmd[0] == '-') {
 			std::regex pattern("^\\-([0-9]+),([0-9]+)$");
 			std::smatch match;
-			std::string cmdStr(cmd);
-			if (std::regex_match(cmdStr, match, pattern)) {
+			if (std::regex_match(cmd, match, pattern)) {
 				int row = std::stoi(match[1].str());
 				int col = std::stoi(match[2].str());
 				int index = (row-1) + ((col-1) * COLS);
 
 				if (row >= 1 && row < ROWS && col >= 1 && col < COLS) {
-					BOARD[index] = static_cast<char>(State::Dead);
+					(*BOARD)[index] = static_cast<char>(State::Dead);
 				}
 				else {
 					#if LINUX
@@ -166,8 +211,10 @@ namespace Command {
 int main (void) {
 	clear();
 
+	char* BOARD = new char[BOARD_SIZE];
+	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+	BOARD[BOARD_SIZE] = '\0';
 
-	char BOARD[BOARD_SIZE + 1];
 	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE); // Set the BOARD to be just dots (dead cell)
 	BOARD[BOARD_SIZE] = '\0';
 
@@ -177,7 +224,7 @@ int main (void) {
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.2.3\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.3.0\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
@@ -192,7 +239,7 @@ int main (void) {
 		printf("> ");
 		std::getline(std::cin, cmd);
 
-		Command::command(cmd, BOARD);
+		Command::command(cmd, &BOARD);
 		//displayBoard(BOARD);
 	}
 
@@ -202,6 +249,7 @@ int main (void) {
 	#elif WIN
 		setColour(static_cast<int>(Colour::WIN_RESET));
 	#endif
+	delete[] BOARD;
 }
 
 void update (char * BOARD) {
@@ -221,8 +269,29 @@ void update (char * BOARD) {
 		}
 		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
 		clear();
+		++GEN;
+		printf("Generation: %Ld\n", GEN);
 		displayBoard(BOARD);
 		std::this_thread::sleep_for(std::chrono::milliseconds(SPEED)); // Wait 1 second
+	}
+}
+
+void step (char * BOARD, int i) {
+	char newBoard[BOARD_SIZE + 1]; // Create the next board generation
+	newBoard[BOARD_SIZE] = '\0';
+
+	 for (int j = 0; j < i; ++j) {
+		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
+			int neighbours = countNeighbours(BOARD, i); // Get the neighbouring cells of the current cell
+			if (BOARD[i] == static_cast<char>(State::Alive)) { // If the cell is alive
+				newBoard[i] = (neighbours == 2 || neighbours == 3) ? static_cast<char>(State::Alive) : static_cast<char>(State::Dead);  // If there are 2 or 3 neighbouring cellswe set the current cell to be alive
+			} 
+			else { // If the current cell is dead 
+				newBoard[i] = (neighbours == 3) ? static_cast<char>(State::Alive) : static_cast<char>(State::Dead); // If there are 3 neighbouring cells we set the current cell to be alive
+			}
+		}
+		GEN++;
+		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
 	}
 }
 
@@ -263,7 +332,7 @@ void displayBoard (char * BOARD) {
 		#elif WIN
 			setColour(static_cast<int>(Colour::WIN_GREY));
 		#endif
-		if ((j + 1) % ROWS == 0) { // If we are at the end of the first row
+		if ((j + 1) % COLS == 0) { // If we are at the end of the first row
 			printf("\n");
 		}
 	}
