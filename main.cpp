@@ -8,6 +8,8 @@
 #include <regex>
 #include <string>
 #include <cstring>
+#include <fstream>
+
 
 // Globals
 
@@ -46,16 +48,30 @@ namespace Command {
 			#elif WIN
 				printf("COMMANDS\n");
 			#endif
-			printf(" 1. +<int>,<int> : Make a cell alive on the board \n \ 
+			printf(" 1. +<int>,<int> : Make a cell alive on the board \n \
 2. -<int>,<int> : Make a cell dead on the board \n \
 3. board        : Show the current game board \n \
-4. run          : Run the simulation\n\n");
+4. run          : Run the simulation\n \
+4. read         : Read a script file\n\n");
 		}
 		else if (cmd == "board") {
 			displayBoard(BOARD);
 		}
 		else if (cmd == "run") {
 			update(BOARD);
+		}
+		else if (cmd == "read") {
+			printf("File name: ");
+			std::string file;
+			std::getline(std::cin, file); // Get file name
+			
+			std::string word;
+
+			std::ifstream read(file);
+			while (std::getline(read, word)) {
+				Command::command(word, BOARD);
+			}
+			read.close();
 		}
 		else if (cmd[0] == '+') {
 			std::regex pattern("^\\+([0-9]+),([0-9]+)$");
@@ -117,19 +133,21 @@ namespace Command {
 			}
 		}
 		else {
-			#if LINUX
-				printf("%s", RED);
-			#elif WIN
-				setColour(static_cast<int>(Colour::WIN_RED));
-			#endif
-	
-			printf("E: Invalid command.\n");
+			if (cmd != "") {
+				#if LINUX
+					printf("%s", RED);
+				#elif WIN
+					setColour(static_cast<int>(Colour::WIN_RED));
+				#endif
+		
+				printf("E: Invalid command.\n");
 
-			#if LINUX
-				printf("%s", GREEN);
-			#elif WIN
-				setColour(static_cast<int>(Colour::WIN_GREEN));
-			#endif
+				#if LINUX
+					printf("%s", GREEN);
+				#elif WIN
+					setColour(static_cast<int>(Colour::WIN_GREEN));
+				#endif
+			}
 		}
 	}
 };
@@ -150,7 +168,7 @@ int main (void) {
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.1.2\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.2.2\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
