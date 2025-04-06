@@ -1,4 +1,4 @@
-# Conways Game of Life v2.2.3
+# Conways Game of Life v2.3.0
 ## Features
  - Compatible for Windows and Linux
  - Multiple console colours and formatting (For linux)
@@ -14,6 +14,10 @@
  - read              : Read a script file
  - help              : Display the help menu
  - speed = \<int\>     : Set game speed (ms)
+ - size = \<int\>, \<int\> : Set board size
+ - exit / quit       : Quit the program
+ - stat              : Get board info
+ - step \<int\>        : Step a given amount of generations
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
