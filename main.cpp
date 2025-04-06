@@ -13,9 +13,10 @@
 
 // Globals
 
-const uint8_t ROWS = 20;
-const uint8_t COLS = 20;
+const uint8_t ROWS       = 20;
+const uint8_t COLS       = 20;
 const int     BOARD_SIZE = ROWS * COLS;
+int           SPEED      = 500;
 
 // Functions
 
@@ -52,7 +53,8 @@ namespace Command {
 2. -<int>,<int> : Make a cell dead on the board \n \
 3. board        : Show the current game board \n \
 4. run          : Run the simulation\n \
-4. read         : Read a script file\n\n");
+4. read         : Read a script file\n \
+5. speed=<int>  : Set the game speed (ms)\n\n");
 		}
 		else if (cmd == "board") {
 			displayBoard(BOARD);
@@ -73,12 +75,19 @@ namespace Command {
 			}
 			read.close();
 		}
+		else if (cmd[0] == 's') { // First character of 'speed'
+			std::regex pattern("^speed=([0-9]+)$");
+			std::smatch match;
+
+			if (std::regex_match(cmd, match, pattern)) {
+				SPEED = std::stoi(match[1].str());
+			}
+		}
 		else if (cmd[0] == '+') {
 			std::regex pattern("^\\+([0-9]+),([0-9]+)$");
 			std::smatch match;
-			std::string cmdStr(cmd);
 
-			if (std::regex_match(cmdStr, match, pattern)) {
+			if (std::regex_match(cmd, match, pattern)) {
 				int row = std::stoi(match[1].str());
 				int col = std::stoi(match[2].str());
 				int index = (row-1) + ((col-1) * COLS);
@@ -168,7 +177,7 @@ int main (void) {
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.2.2\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.2.3\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
@@ -213,7 +222,7 @@ void update (char * BOARD) {
 		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
 		clear();
 		displayBoard(BOARD);
-		std::this_thread::sleep_for(std::chrono::seconds(1)); // Wait 1 second
+		std::this_thread::sleep_for(std::chrono::milliseconds(SPEED)); // Wait 1 second
 	}
 }
 
