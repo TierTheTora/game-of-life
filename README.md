@@ -7,8 +7,8 @@
  - 2D Cell placing system
  - Script file reading
 ## Commands
- - \+ <int>, <int>    : Place a cell on the board
- - \- <int>, <int>    : Remove a cell on the board
+ - \+ \<int\>, \<int\>    : Place a cell on the board
+ - \- \<int\>, \<int\>    : Remove a cell on the board
  - board             : Display the game board
  - run               : Run the simulation
  - read              : Read a script file
