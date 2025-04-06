@@ -5,7 +5,7 @@
 #define LINUX defined(__unix__) || defined(__linux__) || defined(__APPLE__) || defined(__MACH__)
 
 #if WIN
-#include <windows.h>
+	#include <windows.h>
 #endif
 
 // FOREGROUND CONSOLE COLOURS
@@ -32,18 +32,21 @@
 // FUNCTIONS
 
 int clear() {
+
 #if LINUX
 	return system("clear");
 #elif WIN
 	return system("cls");
 #endif
+
 }
+
 #if LINUX
-void printx (const bool it, const bool un, const bool bd, const bool st, const char * TEXT) {
-	if (it) printf("\e[3m");
-	if (un) printf("\e[4m");
-	if (bd) printf("\e[1m");
-	if (st) printf("\e[9m");
-	printf("%s\e[23m\e[22m\e[24m\e[29m", TEXT);
-}
+	void printx (const bool it, const bool un, const bool bd, const bool st, const char * TEXT) {
+		if (it) printf("\e[3m");
+		if (un) printf("\e[4m");
+		if (bd) printf("\e[1m");
+		if (st) printf("\e[9m");
+		printf("%s\e[23m\e[22m\e[24m\e[29m", TEXT);
+	}
 #endif

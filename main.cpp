@@ -22,8 +22,7 @@ void displayBoard    (char * BOARD);
 
 // Classes
 
-class Command {
-	public:
+namespace Command {
 	void command(char * cmd, char * BOARD) {
 		// Trim spaces
 		int i = 0, j = 0;
@@ -39,18 +38,18 @@ class Command {
 		}
 		if (strcmp(cmd, "help") == 0) {
 			#if LINUX
-			printx(false, true, true, false, "RULES\n");
+				printx(false, true, true, false, "RULES\n");
 			#elif WIN
-			printf("RULES\n");
+				printf("RULES\n");
 			#endif
 			printf(" 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation. \n \
 2. Any live cell with two or three live neighbours lives on to the next generation. \n \
 3. Any live cell with more than three live neighbours dies, as if by overpopulation. \n \
 4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.\n\n");
 			#if LINUX
-			printx(false, true, true, false, "COMMANDS\n");
+				printx(false, true, true, false, "COMMANDS\n");
 			#elif WIN
-			printf("COMMANDS\n");
+				printf("COMMANDS\n");
 			#endif
 			printf(" 1. +<int> : Make a cell alive on the board \n \ 
 2. -<int> : Make a cell dead on the board \n \
@@ -74,7 +73,19 @@ class Command {
 					BOARD[number-1] = '#';
 				}
 				else {
-					printf("Number out of bounds.");
+					#if LINUX
+						printf("%s", RED);
+					#elif WIN
+						setColour(WIN_RED);
+					#endif
+
+					printf("E: Number out of bounds.\n");
+					
+					#if LINUX
+						printf("%s", GREEN);
+					#elif WIN
+						setColour(WIN_GREEN);
+					#endif
 				}
 			}
 		}
@@ -89,7 +100,19 @@ class Command {
 					BOARD[number-1] = '.';
 				}
 				else {
-					printf("Number out of bounds.");
+					#if LINUX
+						printf("%s", RED);
+					#elif WIN
+						setColour(WIN_RED);
+					#endif
+					
+					printf("E: Number out of bounds.\n");
+					
+					#if LINUX
+						printf("%s", GREEN);
+					#elif WIN
+						setColour(WIN_GREEN);
+					#endif
 				}
 			}
 		}
@@ -107,28 +130,34 @@ int main (void) {
 	BOARD[BOARD_SIZE] = '\0';
 
 	#if LINUX	
-	printf("%s", GREEN);
+		printf("%s", GREEN);
 	#elif WIN
-	setColour(WIN_GREEN);
+		setColour(WIN_GREEN);
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2\n");
-	printf("\t\t\t\t\t- https://github.com/TierTheTora\n\n\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.0.1\n");
+	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
+	#if LINUX
+		printf("\t\tType \'");
+		printx(true, false, false, false, "help");
+		printf("\' for help.\n\n\n");
+	#elif WIN
+		printf("\t\tType \'help\' for help.\n\n\n");
+	#endif
 
 	while (true) { // Console prompt loop
 		char cmd[1024];
 		printf("> ");
 		std::cin >> cmd;
-		Command* command = new Command();
-		command->command(cmd, BOARD);
+		Command::command(cmd, BOARD);
 		//displayBoard(BOARD);
 	}
 
 	
 	#if LINUX
-	printf("%s", RESET);
+		printf("%s", RESET);
 	#elif WIN
-	setColour(WIN_RESET);
+		setColour(WIN_RESET);
 	#endif
 }
 
@@ -177,17 +206,19 @@ int countNeighbours (const char * BOARD, int i) {
 void displayBoard (char * BOARD) {
 	for (int j = 0; j < BOARD_SIZE; ++j) { // Iterate through each cell
 		#if LINUX
-		printf("%s", GREY);
-		if (BOARD[j] == '#') printf("%s", YELLOW);
+			printf("%s", GREY);
+			if (BOARD[j] == '#') printf("%s", YELLOW);
 		#elif WIN
-		setColour(WIN_GREY);
-		if (BOARD[j] == '#') setColour(WIN_YELLOW);
+			setColour(WIN_GREY);
+			if (BOARD[j] == '#') setColour(WIN_YELLOW);
 		#endif
+		
 		printf("%c ", BOARD[j]);
+		
 		#if LINUX
-		printf("%s", GREY);
+			printf("%s", GREY);
 		#elif WIN
-		setColour(WIN_GREY);
+			setColour(WIN_GREY);
 		#endif
 		if ((j + 1) % ROWS == 0) { // If we are at the end of the first row
 			printf("\n");
@@ -195,8 +226,8 @@ void displayBoard (char * BOARD) {
 	}
 	printf("\n");
 	#if LINUX
-	printf("%s", GREEN);
+		printf("%s", GREEN);
 	#elif WIN 
-	setColour(WIN_GREEN);
+		setColour(WIN_GREEN);
 	#endif
 }
