@@ -7,6 +7,7 @@
 #include <thread>
 #include <regex>
 #include <string>
+#include <cstring>
 
 // Globals
 
@@ -23,20 +24,14 @@ void displayBoard    (char * BOARD);
 // Classes
 
 namespace Command {
-	void command(char * cmd, char * BOARD) {
+	void command(std::string cmd, char * BOARD) {
 		// Trim spaces
-		int i = 0, j = 0;
-		while (cmd[i]) {
-			if (cmd[i] != ' ') {
-				cmd[j++] = cmd[i];
-			}
-			i++;
+		cmd.erase(std::remove_if(cmd.begin(), cmd.end(), ::isspace), cmd.end()); // Removes the spaces
+		// Convert cmd to be lowercase
+		for (char& c : cmd) {
+			c = std::tolower(c); 
 		}
-		cmd[j] = '\0';
-		for (int k = 0; cmd[k]; ++k) { // Convert cmd to be lowercase
-			cmd[k] = tolower(cmd[k]);
-		}
-		if (strcmp(cmd, "help") == 0) {
+		if (cmd == "help") {
 			#if LINUX
 				printx(false, true, true, false, "RULES\n");
 			#elif WIN
@@ -51,26 +46,29 @@ namespace Command {
 			#elif WIN
 				printf("COMMANDS\n");
 			#endif
-			printf(" 1. +<int> : Make a cell alive on the board \n \ 
-2. -<int> : Make a cell dead on the board \n \
-3. board  : Show the current game board \n \
-4. run    : Run the simulation\n\n");
+			printf(" 1. +<int>,<int> : Make a cell alive on the board \n \ 
+2. -<int>,<int> : Make a cell dead on the board \n \
+3. board        : Show the current game board \n \
+4. run          : Run the simulation\n\n");
 		}
-		else if (strcmp(cmd, "board") == 0) {
+		else if (cmd == "board") {
 			displayBoard(BOARD);
 		}
-		else if (strcmp(cmd, "run") == 0) {
+		else if (cmd == "run") {
 			update(BOARD);
 		}
-		{
-			std::regex pattern("^\\+([0-9]+)$");
+		else if (cmd[0] == '+') {
+			std::regex pattern("^\\+([0-9]+),([0-9]+)$");
 			std::smatch match;
 			std::string cmdStr(cmd);
-		
+
 			if (std::regex_match(cmdStr, match, pattern)) {
-				int number = std::stoi(match[1].str());
-				if (number >= 0 && number < BOARD_SIZE) {
-					BOARD[number-1] = static_cast<char>(State::Alive);
+				int row = std::stoi(match[1].str());
+				int col = std::stoi(match[2].str());
+				int index = (row-1) + ((col-1) * COLS);
+
+				if (row >= 1 && row < ROWS && col >= 1 && col < COLS) {
+					BOARD[index] = static_cast<char>(State::Alive);
 				}
 				else {
 					#if LINUX
@@ -78,9 +76,9 @@ namespace Command {
 					#elif WIN
 						setColour(static_cast<int>(Colour::WIN_RED));
 					#endif
+	
+					printf("E: Coordinates out of bounds.\n");
 
-					printf("E: Number out of bounds.\n");
-					
 					#if LINUX
 						printf("%s", GREEN);
 					#elif WIN
@@ -89,15 +87,17 @@ namespace Command {
 				}
 			}
 		}
-		{
-			std::regex pattern("^\\-([0-9]+)$");
+		else if (cmd[0] == '-') {
+			std::regex pattern("^\\-([0-9]+),([0-9]+)$");
 			std::smatch match;
 			std::string cmdStr(cmd);
-		
 			if (std::regex_match(cmdStr, match, pattern)) {
-				int number = std::stoi(match[1].str());
-				if (number >= 0 && number < BOARD_SIZE) {
-					BOARD[number-1] = static_cast<char>(State::Dead);
+				int row = std::stoi(match[1].str());
+				int col = std::stoi(match[2].str());
+				int index = (row-1) + ((col-1) * COLS);
+
+				if (row >= 1 && row < ROWS && col >= 1 && col < COLS) {
+					BOARD[index] = static_cast<char>(State::Dead);
 				}
 				else {
 					#if LINUX
@@ -105,9 +105,9 @@ namespace Command {
 					#elif WIN
 						setColour(static_cast<int>(Colour::WIN_RED));
 					#endif
-					
-					printf("E: Number out of bounds.\n");
-					
+	
+					printf("E: Coordinates out of bounds.\n");
+
 					#if LINUX
 						printf("%s", GREEN);
 					#elif WIN
@@ -115,6 +115,21 @@ namespace Command {
 					#endif
 				}
 			}
+		}
+		else {
+			#if LINUX
+				printf("%s", RED);
+			#elif WIN
+				setColour(static_cast<int>(Colour::WIN_RED));
+			#endif
+	
+			printf("E: Invalid command.\n");
+
+			#if LINUX
+				printf("%s", GREEN);
+			#elif WIN
+				setColour(static_cast<int>(Colour::WIN_GREEN));
+			#endif
 		}
 	}
 };
@@ -135,7 +150,7 @@ int main (void) {
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.0.2\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.1.2\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
@@ -146,9 +161,10 @@ int main (void) {
 	#endif
 
 	while (true) { // Console prompt loop
-		char cmd[1024];
+		std::string cmd;
 		printf("> ");
-		std::cin >> cmd;
+		std::getline(std::cin, cmd);
+
 		Command::command(cmd, BOARD);
 		//displayBoard(BOARD);
 	}
