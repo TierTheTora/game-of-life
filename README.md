@@ -1,4 +1,4 @@
-# Conways Game of Life (Linux and Windows)
+# Conways Game of Life v2.2.3
 ## Features
  - Compatible for Windows and Linux
  - Multiple console colours and formatting (For linux)
@@ -13,6 +13,7 @@
  - run               : Run the simulation
  - read              : Read a script file
  - help              : Display the help menu
+ - speed = \<int\>     : Set game speed (ms)
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
@@ -21,5 +22,5 @@
    - ([source](https://rustwasm.github.io/book/game-of-life/rules.html))
   
 ## Symbols
-- #: Alive cell
-- .: Dead cell
+- \#  : Alive cell
+- .  : Dead cell
