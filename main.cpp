@@ -70,13 +70,13 @@ namespace Command {
 			if (std::regex_match(cmdStr, match, pattern)) {
 				int number = std::stoi(match[1].str());
 				if (number >= 0 && number < BOARD_SIZE) {
-					BOARD[number-1] = '#';
+					BOARD[number-1] = static_cast<char>(State::Alive);
 				}
 				else {
 					#if LINUX
 						printf("%s", RED);
 					#elif WIN
-						setColour(WIN_RED);
+						setColour(static_cast<int>(Colour::WIN_RED));
 					#endif
 
 					printf("E: Number out of bounds.\n");
@@ -84,7 +84,7 @@ namespace Command {
 					#if LINUX
 						printf("%s", GREEN);
 					#elif WIN
-						setColour(WIN_GREEN);
+						setColour(static_cast<int>(Colour::WIN_GREEN));
 					#endif
 				}
 			}
@@ -97,13 +97,13 @@ namespace Command {
 			if (std::regex_match(cmdStr, match, pattern)) {
 				int number = std::stoi(match[1].str());
 				if (number >= 0 && number < BOARD_SIZE) {
-					BOARD[number-1] = '.';
+					BOARD[number-1] = static_cast<char>(State::Dead);
 				}
 				else {
 					#if LINUX
 						printf("%s", RED);
 					#elif WIN
-						setColour(WIN_RED);
+						setColour(static_cast<int>(Colour::WIN_RED));
 					#endif
 					
 					printf("E: Number out of bounds.\n");
@@ -111,7 +111,7 @@ namespace Command {
 					#if LINUX
 						printf("%s", GREEN);
 					#elif WIN
-						setColour(WIN_GREEN);
+						setColour(static_cast<int>(Colour::WIN_GREEN));
 					#endif
 				}
 			}
@@ -126,16 +126,16 @@ int main (void) {
 
 
 	char BOARD[BOARD_SIZE + 1];
-	memset(BOARD, '.', BOARD_SIZE); // Set the BOARD to be just dots (dead cell)
+	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE); // Set the BOARD to be just dots (dead cell)
 	BOARD[BOARD_SIZE] = '\0';
 
 	#if LINUX	
 		printf("%s", GREEN);
 	#elif WIN
-		setColour(WIN_GREEN);
+		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.0.1\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.0.2\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
@@ -157,7 +157,7 @@ int main (void) {
 	#if LINUX
 		printf("%s", RESET);
 	#elif WIN
-		setColour(WIN_RESET);
+		setColour(static_cast<int>(Colour::WIN_RESET));
 	#endif
 }
 
@@ -169,11 +169,11 @@ void update (char * BOARD) {
 	while (true) {
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
 			int neighbours = countNeighbours(BOARD, i); // Get the neighbouring cells of the current cell
-			if (BOARD[i] == '#') { // If the cell is alive
-				newBoard[i] = (neighbours == 2 || neighbours == 3) ? '#' : '.';  // If there are 2 or 3 neighbouring cellswe set the current cell to be alive
+			if (BOARD[i] == static_cast<char>(State::Alive)) { // If the cell is alive
+				newBoard[i] = (neighbours == 2 || neighbours == 3) ? static_cast<char>(State::Alive) : static_cast<char>(State::Dead);  // If there are 2 or 3 neighbouring cellswe set the current cell to be alive
 			} 
 			else { // If the current cell is dead 
-				newBoard[i] = (neighbours == 3) ? '#' : '.'; // If there are 3 neighbouring cells we set the current cell to be alive
+				newBoard[i] = (neighbours == 3) ? static_cast<char>(State::Alive) : static_cast<char>(State::Dead); // If there are 3 neighbouring cells we set the current cell to be alive
 			}
 		}
 		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
@@ -194,7 +194,7 @@ int countNeighbours (const char * BOARD, int i) {
 			int r = row + dr; // Row the neighour is at
 			int c = col + dc; // Column the neighbour is at
 			if (r >= 0 && r < ROWS && c >= 0 && c < COLS) { // Check if the neighbour is inside the board
-				if (BOARD[r * COLS + c] == '#') { // If the cell is alive increase the neighbour count
+				if (BOARD[r * COLS + c] == static_cast<char>(State::Alive)) { // If the cell is alive increase the neighbour count
 					++count;
 				}
 			}
@@ -207,10 +207,10 @@ void displayBoard (char * BOARD) {
 	for (int j = 0; j < BOARD_SIZE; ++j) { // Iterate through each cell
 		#if LINUX
 			printf("%s", GREY);
-			if (BOARD[j] == '#') printf("%s", YELLOW);
+			if (BOARD[j] == static_cast<char>(State::Alive)) printf("%s", YELLOW);
 		#elif WIN
-			setColour(WIN_GREY);
-			if (BOARD[j] == '#') setColour(WIN_YELLOW);
+			setColour(static_cast<int>(Colour::WIN_GREY));
+			if (BOARD[j] == static_cast<char>(State::Alive)) setColour(static_cast<int>(Colour::WIN_YELLOW));
 		#endif
 		
 		printf("%c ", BOARD[j]);
@@ -218,7 +218,7 @@ void displayBoard (char * BOARD) {
 		#if LINUX
 			printf("%s", GREY);
 		#elif WIN
-			setColour(WIN_GREY);
+			setColour(static_cast<int>(Colour::WIN_GREY));
 		#endif
 		if ((j + 1) % ROWS == 0) { // If we are at the end of the first row
 			printf("\n");
@@ -228,6 +228,6 @@ void displayBoard (char * BOARD) {
 	#if LINUX
 		printf("%s", GREEN);
 	#elif WIN 
-		setColour(WIN_GREEN);
+		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 }

@@ -18,16 +18,25 @@
 	const char * RESET  = "\033[00m";
 #elif WIN
 	// Windows colour values
-	const int WIN_RED    = 4;
-	const int WIN_YELLOW = 14;
-	const int WIN_GREY   = 8;
-	const int WIN_GREEN  = 2;
-	const int WIN_RESET  = 15;
+	enum class Colour : int {
+		WIN_RED     = 4,
+		WIN_YELLOW  = 14,
+		WIN_GREY    = 8,
+		WIN_GREEN   = 2,
+		WIN_RESET   = 15
+	};
 
 	void setColour (int colour) {
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colour); // Set colour on windwos
 	}
 #endif
+
+// CELLS
+
+enum class State : char {
+	Alive = '#',
+	Dead  = '.'
+};
 
 // FUNCTIONS
 
