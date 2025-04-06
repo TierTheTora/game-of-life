@@ -12,6 +12,7 @@
  - board             : Display the game board
  - run               : Run the simulation
  - read              : Read a script file
+ - help              : Display the help menu
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
