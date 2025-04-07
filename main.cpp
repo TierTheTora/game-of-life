@@ -26,18 +26,23 @@ int  countNeighbours (const char* BOARD, int i);
 void update          (char * BOARD);
 void displayBoard    (char * BOARD);
 void step            (char * BOARD, int i);
+int  errunx          ();
 
 // Classes
 
 namespace Command {
 	void command(std::string cmd, char ** BOARD) {
-		// Trim spaces
-		cmd.erase(std::remove_if(cmd.begin(), cmd.end(), ::isspace), cmd.end()); // Removes the spaces
 		// Convert cmd to be lowercase
 		for (char& c : cmd) {
 			c = std::tolower(c); 
 		}
-		if (cmd == "help") {
+		std::string cmdo = cmd; // cmd with spaces
+		// Trim spaces
+		cmd.erase(std::remove_if(cmd.begin(), cmd.end(), ::isspace), cmd.end()); // Removes the spaces
+		if (cmd[0] == '#' || cmd == "") {
+
+		}
+		else if (cmd == "help") {
 			#if LINUX
 				printx(false, true, true, false, "RULES\n");
 			#elif WIN
@@ -52,36 +57,40 @@ namespace Command {
 			#elif WIN
 				printf("COMMANDS\n");
 			#endif
-			printf(" 1. +<int>,<int>      : Make a cell alive on the board \n \
-2. -<int>,<int>      : Make a cell dead on the board \n \
-3. board             : Show the current game board \n \
-4. run               : Run the simulation\n \
-4. load              : Read a script file\n \
-5. speed=<int>       : Set the game speed (ms)\n \
-6. size=<int>,<int>  : Set board size (MAX: 255x255)\n \
-7. exit/quit         : Exit the programm\n \
-8. stat              : Show information on the board\n \
-9. step <int>        : Step forward a given amount of generations\n \
-\n\n");
+			printf(" 1.  +<int>,<int>      : Make a cell alive on the board \n \
+2.  -<int>,<int>      : Make a cell dead on the board \n \
+3.  board             : Show the current game board \n \
+4.  run               : Run the simulation\n \
+4.  load <file>       : Read a script file\n \
+5.  speed=<int>       : Set the game speed (ms)\n \
+6.  size=<int>,<int>  : Set board size (MAX: 255x255)\n \
+7.  exit/quit         : Exit the program\n \
+8.  stat              : Show information on the board\n \
+9.  step <int>        : Step forward a given amount of generations\n \
+10. clear             : Clear the board\n \
+11. fill              : Fill the board with Alive cells\n\n");
+		}
+		else if (cmdo[0] == 'l') {
+			std::regex pattern("^load\\s+(.*)$");
+			std::smatch match;
+
+			if (std::regex_match(cmdo, match, pattern)) {
+				std::string file = match[1].str();
+				std::string word;
+
+				std::ifstream read(file);
+				while (std::getline(read, word)) {
+					Command::command(word, BOARD);
+				}
+				read.close();
+			}
+			else errunx();
 		}
 		else if (cmd == "board") {
 			displayBoard(*BOARD);
 		}
 		else if (cmd == "run") {
 			update(*BOARD);
-		}
-		else if (cmd == "load") {
-			printf("File name: ");
-			std::string file;
-			std::getline(std::cin, file); // Get file name
-			
-			std::string word;
-
-			std::ifstream read(file);
-			while (std::getline(read, word)) {
-				Command::command(word, BOARD);
-			}
-			read.close();
 		}
 		else if (cmd == "clear") {
 			memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
@@ -95,22 +104,25 @@ namespace Command {
 			delete[] *BOARD;
 			exit(0);
 		}
-		else if (cmd[0] == 's') { // First character of 'speed'
+		else if (cmd[0] == 's') { 
+			std::regex pattern("^speed=([0-9]+)$");
+			std::regex ptrn("^size=([0-9]+),([0-9]+)$");
+			std::regex ptrn2("^step([0-9]+)$");
+			std::smatch match;
 			if (cmd == "stat") {
+				ALIVE = 0;
 				for (int i = 0; i < BOARD_SIZE; ++i) { // Iterate thrugh board
 					if ((*BOARD)[i] == static_cast<char>(State::Alive)) { // If cell is alive
 						++ALIVE;
 					}
 				}
-				printf("Generation: %Ld\n", GEN);
+				int dead = BOARD_SIZE - ALIVE;
+				printf("Generation:  %Ld\n", GEN);
 				printf("Alive cells: %d\n", ALIVE);
-			}
-			std::regex pattern("^speed=([0-9]+)$");
-			std::regex ptrn("^size=([0-9]+),([0-9]+)$");
-			std::regex ptrn2("^step([0-9]+)$");
-			std::smatch match;
+				printf("Dead cells:  %d\n", dead);
 
-			if (std::regex_match(cmd, match, pattern)) {
+			}
+			else if (std::regex_match(cmd, match, pattern)) {
 				SPEED = std::stoi(match[1].str());
 			}
 			else if (regex_match(cmd, match, ptrn)) {
@@ -128,6 +140,27 @@ namespace Command {
 				int i = std::stoi(match[1].str());
 				step(*BOARD, i);
 			}
+			else {
+				errunx();
+			}
+		}
+		else if (cmd[0] == 'f') {
+			/*std::regex pattern("^fill([0-9]+),([0-9]+),([0-9]+),([0-9]+)$");
+			std::smatch match;
+			if (std::regex_match(cmd, match, pattern)) {
+				int x = std::stoi(match[1].str());
+				int y = std::stoi(match[2].str());
+				int z = std::stoi(match[3].str());
+				int w = std::stoi(match[4].str());
+				
+			}
+			else*/ if (cmd == "fill") {
+				delete[] *BOARD;
+				*BOARD = new char[BOARD_SIZE + 1];
+				memset(*BOARD, static_cast<char>(State::Alive), BOARD_SIZE);
+				(*BOARD)[BOARD_SIZE] = '\0';
+			}
+			else errunx();
 		}
 		else if (cmd[0] == '+') {
 			std::regex pattern("^\\+([0-9]+),([0-9]+)$");
@@ -157,6 +190,7 @@ namespace Command {
 					#endif
 				}
 			}
+			else errunx();
 		}
 		else if (cmd[0] == '-') {
 			std::regex pattern("^\\-([0-9]+),([0-9]+)$");
@@ -185,23 +219,10 @@ namespace Command {
 					#endif
 				}
 			}
+			else errunx();
 		}
 		else {
-			if (cmd != "") {
-				#if LINUX
-					printf("%s", RED);
-				#elif WIN
-					setColour(static_cast<int>(Colour::WIN_RED));
-				#endif
-		
-				printf("E: Invalid command.\n");
-
-				#if LINUX
-					printf("%s", GREEN);
-				#elif WIN
-					setColour(static_cast<int>(Colour::WIN_GREEN));
-				#endif
-			}
+			errunx();
 		}
 	}
 };
@@ -215,16 +236,13 @@ int main (void) {
 	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
 	BOARD[BOARD_SIZE] = '\0';
 
-	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE); // Set the BOARD to be just dots (dead cell)
-	BOARD[BOARD_SIZE] = '\0';
-
 	#if LINUX	
 		printf("%s", GREEN);
 	#elif WIN
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.3.0\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.4.0\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
@@ -342,4 +360,20 @@ void displayBoard (char * BOARD) {
 	#elif WIN 
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
+}
+int errunx () {
+	#if LINUX
+		printf("%s", RED);
+	#elif WIN
+		setColour(static_cast<int>(Colour::WIN_RED));
+	#endif
+		
+	printf("E: Invalid command.\n");
+
+	#if LINUX
+		printf("%s", GREEN);
+	#elif WIN
+		setColour(static_cast<int>(Colour::WIN_GREEN));
+	#endif
+	return 1;
 }
