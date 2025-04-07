@@ -134,7 +134,6 @@ namespace Command {
 				
 				*BOARD = new char[BOARD_SIZE + 1];
 				memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
-				(*BOARD)[BOARD_SIZE] = '\0';
 			}
 			else if (regex_match(cmd, match, ptrn2)) {
 				int i = std::stoi(match[1].str());
@@ -156,9 +155,8 @@ namespace Command {
 			}
 			else*/ if (cmd == "fill") {
 				delete[] *BOARD;
-				*BOARD = new char[BOARD_SIZE + 1];
+				*BOARD = new char[BOARD_SIZE];
 				memset(*BOARD, static_cast<char>(State::Alive), BOARD_SIZE);
-				(*BOARD)[BOARD_SIZE] = '\0';
 			}
 			else errunx();
 		}
@@ -234,7 +232,6 @@ int main (void) {
 
 	char* BOARD = new char[BOARD_SIZE];
 	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
-	BOARD[BOARD_SIZE] = '\0';
 
 	#if LINUX	
 		printf("%s", GREEN);
@@ -272,8 +269,7 @@ int main (void) {
 
 void update (char * BOARD) {
 	clear();
-	char newBoard[BOARD_SIZE + 1]; // Create the next board generation
-	newBoard[BOARD_SIZE] = '\0';
+	char newBoard[BOARD_SIZE]; // Create the next board generation
 
 	while (true) {
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
@@ -295,8 +291,7 @@ void update (char * BOARD) {
 }
 
 void step (char * BOARD, int i) {
-	char newBoard[BOARD_SIZE + 1]; // Create the next board generation
-	newBoard[BOARD_SIZE] = '\0';
+	char newBoard[BOARD_SIZE]; // Create the next board generation
 
 	 for (int j = 0; j < i; ++j) {
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
