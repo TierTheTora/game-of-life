@@ -134,6 +134,7 @@ namespace Command {
 				
 				*BOARD = new char[BOARD_SIZE + 1];
 				memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+				(*BOARD)[BOARD_SIZE] = '\0';
 			}
 			else if (regex_match(cmd, match, ptrn2)) {
 				int i = std::stoi(match[1].str());
@@ -155,8 +156,9 @@ namespace Command {
 			}
 			else*/ if (cmd == "fill") {
 				delete[] *BOARD;
-				*BOARD = new char[BOARD_SIZE];
+				*BOARD = new char[BOARD_SIZE + 1];
 				memset(*BOARD, static_cast<char>(State::Alive), BOARD_SIZE);
+				(*BOARD)[BOARD_SIZE] = '\0';
 			}
 			else errunx();
 		}
@@ -230,8 +232,9 @@ namespace Command {
 int main (void) {
 	clear();
 
-	char* BOARD = new char[BOARD_SIZE];
+	char* BOARD = new char[BOARD_SIZE + 1];
 	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+	BOARD[BOARD_SIZE] = '\0';
 
 	#if LINUX	
 		printf("%s", GREEN);
