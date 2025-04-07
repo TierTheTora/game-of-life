@@ -1,0 +1,11 @@
+clear
+# First line
++ 3, 2
++ 4, 2
++ 5, 2
+# Second line
++ 2, 3
++ 3, 3
++ 4, 3
+# Show the board
+board
