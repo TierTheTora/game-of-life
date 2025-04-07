@@ -1,4 +1,4 @@
-# Conways Game of Life v2.3.0
+# Conways Game of Life v2.4.0
 ## Features
  - Compatible for Windows and Linux
  - Multiple console colours and formatting (For linux)
@@ -6,6 +6,7 @@
  - Console like User Interface
  - 2D Cell placing system
  - Script file reading
+ - Uses # for comments
 ## Commands
  - \+ \<int\>, \<int\>    : Place a cell on the board
  - \- \<int\>, \<int\>    : Remove a cell on the board
@@ -18,6 +19,8 @@
  - exit / quit       : Quit the program
  - stat              : Get board info
  - step \<int\>        : Step a given amount of generations
+ - clear             : Clear the board
+ - fill              : Fill the board with alive cells
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
