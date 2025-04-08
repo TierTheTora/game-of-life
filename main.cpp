@@ -28,6 +28,7 @@ int  countNeighbours (const char* BOARD, int i);
 void update          (char * BOARD);
 void displayBoard    (char * BOARD);
 void step            (char * BOARD, int i);
+int  err             (std::string e);
 
 // Classes
 
@@ -410,3 +411,21 @@ void displayBoard (char * BOARD) {
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 }
+
+int err (std::string e) {
+	#if LINUX
+		printf("%s", RED);
+	#elif WIN
+		setColour(static_cast<int>(Colour::WIN_RED));
+	#endif
+		
+	std::cout << "E: "<< e << ".\n";
+
+	#if LINUX
+		printf("%s", GREEN);
+	#elif WIN
+		setColour(static_cast<int>(Colour::WIN_GREEN));
+	#endif
+	return 1;
+}
+

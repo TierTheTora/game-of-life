@@ -60,19 +60,3 @@ int clear() {
 	}
 #endif
 
-int err (std::string e) {
-	#if LINUX
-		printf("%s", RED);
-	#elif WIN
-		setColour(static_cast<int>(Colour::WIN_RED));
-	#endif
-		
-	std::cout << "E: "<< e << ".\n";
-
-	#if LINUX
-		printf("%s", GREEN);
-	#elif WIN
-		setColour(static_cast<int>(Colour::WIN_GREEN));
-	#endif
-	return 1;
-}
