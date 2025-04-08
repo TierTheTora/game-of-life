@@ -9,6 +9,7 @@
 #include <string>
 #include <cstring>
 #include <fstream>
+#include <stdbool.h>
 
 
 // Globals
@@ -19,6 +20,7 @@ int                BOARD_SIZE = ROWS * COLS;
 int                SPEED      = 500;
 unsigned long long GEN        = 0;
 int                ALIVE      = 0;
+bool               WRAP       = true;
 
 // Functions
 
@@ -26,7 +28,6 @@ int  countNeighbours (const char* BOARD, int i);
 void update          (char * BOARD);
 void displayBoard    (char * BOARD);
 void step            (char * BOARD, int i);
-int  errunx          ();
 
 // Classes
 
@@ -68,7 +69,8 @@ namespace Command {
 8.  stat              : Show information on the board\n \
 9.  step <int>        : Step forward a given amount of generations\n \
 10. clear             : Clear the board\n \
-11. fill              : Fill the board with Alive cells\n\n");
+11. fill              : Fill the board with Alive cells\n \
+12. wrap=<on/off>     : Turn board wrapping on or off\n\n");
 		}
 		else if (cmdo[0] == 'l') {
 			std::regex pattern("^load\\s+(.*)$");
@@ -77,14 +79,19 @@ namespace Command {
 			if (std::regex_match(cmdo, match, pattern)) {
 				std::string file = match[1].str();
 				std::string word;
-
+			
 				std::ifstream read(file);
-				while (std::getline(read, word)) {
-					Command::command(word, BOARD);
+				if (read) {
+					while (std::getline(read, word)) {
+						Command::command(word, BOARD);
+					}
+					read.close();
 				}
-				read.close();
+				else {
+					err("File does not exist");
+				}
 			}
-			else errunx();
+			else err("Invalid command");
 		}
 		else if (cmd == "board") {
 			displayBoard(*BOARD);
@@ -103,6 +110,21 @@ namespace Command {
 			#endif
 			delete[] *BOARD;
 			exit(0);
+		}
+		else if (cmd[0] == 'w') {
+			std::regex pattern("^wrap=+(.*)$");
+			std::smatch match;
+
+			if (std::regex_match(cmd, match, pattern)) {
+				std::string opt = match[1].str();
+				WRAP = opt == "on";
+				if (opt != "on" && opt != "off") {
+					err("Wrap must be on or off");
+				}
+			}
+			else {
+				err("Invalid command");
+			}
 		}
 		else if (cmd[0] == 's') { 
 			std::regex pattern("^speed=([0-9]+)$");
@@ -141,26 +163,45 @@ namespace Command {
 				step(*BOARD, i);
 			}
 			else {
-				errunx();
+				err("Invalid command");
 			}
 		}
 		else if (cmd[0] == 'f') {
-			/*std::regex pattern("^fill([0-9]+),([0-9]+),([0-9]+),([0-9]+)$");
+			std::regex pattern("^fill([0-9]+),([0-9]+),([0-9]+),([0-9]+)$");
 			std::smatch match;
 			if (std::regex_match(cmd, match, pattern)) {
 				int x = std::stoi(match[1].str());
 				int y = std::stoi(match[2].str());
 				int z = std::stoi(match[3].str());
 				int w = std::stoi(match[4].str());
-				
+
+				if (x > z || y > w) {
+					err("Fill coordinates must be top-left to bottom-right");
+				}
+
+
+				int left   = std::min(x, z);
+				int right  = std::max(x, z);
+				int top    = std::min(y, w);
+				int bottom = std::max(y, w);
+
+				for (int r = top; r <= bottom; ++r) {
+					for (int c = left; c <= right; ++c) {
+						if (r >= 1 && r <= ROWS && c >= 1 && c <= COLS) {
+							int i = (r - 1) * COLS + (c - 1);
+							(*BOARD)[i] = static_cast<char>(State::Alive);
+						}
+					}
+				}
+			
 			}
-			else*/ if (cmd == "fill") {
+			else if (cmd == "fill") {
 				delete[] *BOARD;
 				*BOARD = new char[BOARD_SIZE + 1];
 				memset(*BOARD, static_cast<char>(State::Alive), BOARD_SIZE);
 				(*BOARD)[BOARD_SIZE] = '\0';
 			}
-			else errunx();
+			else err("Invalid command");
 		}
 		else if (cmd[0] == '+') {
 			std::regex pattern("^\\+([0-9]+),([0-9]+)$");
@@ -175,22 +216,10 @@ namespace Command {
 					(*BOARD)[index] = static_cast<char>(State::Alive);
 				}
 				else {
-					#if LINUX
-						printf("%s", RED);
-					#elif WIN
-						setColour(static_cast<int>(Colour::WIN_RED));
-					#endif
-	
-					printf("E: Coordinates out of bounds.\n");
-
-					#if LINUX
-						printf("%s", GREEN);
-					#elif WIN
-						setColour(static_cast<int>(Colour::WIN_GREEN));
-					#endif
+					err("Coordinates out of bounds");
 				}
 			}
-			else errunx();
+			else err("Invalid command");
 		}
 		else if (cmd[0] == '-') {
 			std::regex pattern("^\\-([0-9]+),([0-9]+)$");
@@ -204,25 +233,13 @@ namespace Command {
 					(*BOARD)[index] = static_cast<char>(State::Dead);
 				}
 				else {
-					#if LINUX
-						printf("%s", RED);
-					#elif WIN
-						setColour(static_cast<int>(Colour::WIN_RED));
-					#endif
-	
-					printf("E: Coordinates out of bounds.\n");
-
-					#if LINUX
-						printf("%s", GREEN);
-					#elif WIN
-						setColour(static_cast<int>(Colour::WIN_GREEN));
-					#endif
+					err("Coordinates out of bounds");
 				}
 			}
-			else errunx();
+			else err("Invalid command");
 		}
 		else {
-			errunx();
+			err("Invalid command");
 		}
 	}
 };
@@ -319,10 +336,20 @@ int countNeighbours (const char * BOARD, int i) {
 	for (int dr = -1; dr <= 1; ++dr) { // Check surrounding rows
 		for (int dc = -1; dc <= 1; ++dc) { // Check surrounding columns
 			if (dr == 0 && dc == 0) continue; // Skip the current cell
-			int r = row + dr; // Row the neighour is at
-			int c = col + dc; // Column the neighbour is at
-			if (r >= 0 && r < ROWS && c >= 0 && c < COLS) { // Check if the neighbour is inside the board
-				if (BOARD[r * COLS + c] == static_cast<char>(State::Alive)) { // If the cell is alive increase the neighbour count
+			if (!WRAP) {
+				int r = row + dr; // Row the neighour is at
+				int c = col + dc; // Column the neighbour is at
+				if (r >= 0 && r < ROWS && c >= 0 && c < COLS) { // Check if the neighbour is inside the board
+					if (BOARD[r * COLS + c] == static_cast<char>(State::Alive)) { // If the cell is alive increase the neighbour count
+						++count;
+					}
+				}
+			}
+			else {
+				int r = (row + dr + ROWS) % ROWS;
+				int c = (col + dc + COLS) % COLS;
+
+				if (BOARD[r * COLS + c] == static_cast<char>(State::Alive)) {
 					++count;
 				}
 			}
@@ -332,7 +359,31 @@ int countNeighbours (const char * BOARD, int i) {
 }
 
 void displayBoard (char * BOARD) {
+	printf("\n");
 	for (int j = 0; j < BOARD_SIZE; ++j) { // Iterate through each cell
+		int rsp = std::to_string(j).length();
+		int csp = std::to_string(j).length();
+
+		if (!j) { // If j == 0
+			printf("  ");
+			for (int k = 1; k <= COLS; ++k) {
+				printf("%d ", k % 10);
+			}
+			printf("\n");
+		}
+		if (j % COLS == 0) {
+			#if LINUX
+				printf("%s", GREEN);
+			#elif WIN
+				setColour(static_cast<int>(Colour::WIN_GREEN));
+			#endif
+			printf("%d ", (j / COLS + 1) % 10);
+			#if LINUX
+				printf("%s", GREY);
+			#elif WIN
+				setColour(static_cast<int>(Colour::WIN_GREY));
+			#endif
+		}
 		#if LINUX
 			printf("%s", GREY);
 			if (BOARD[j] == static_cast<char>(State::Alive)) printf("%s", YELLOW);
@@ -358,20 +409,4 @@ void displayBoard (char * BOARD) {
 	#elif WIN 
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
-}
-int errunx () {
-	#if LINUX
-		printf("%s", RED);
-	#elif WIN
-		setColour(static_cast<int>(Colour::WIN_RED));
-	#endif
-		
-	printf("E: Invalid command.\n");
-
-	#if LINUX
-		printf("%s", GREEN);
-	#elif WIN
-		setColour(static_cast<int>(Colour::WIN_GREEN));
-	#endif
-	return 1;
 }
