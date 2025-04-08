@@ -259,7 +259,7 @@ int main (void) {
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.4.0\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.4.1\n");
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
