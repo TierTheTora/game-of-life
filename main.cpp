@@ -10,8 +10,11 @@
 #include <cstring>
 #include <fstream>
 #include <stdbool.h>
-
-
+#include <csignal>
+#include <unistd.h>
+#if WIN
+	#include <windows.h>
+#endif
 // Globals
 
 uint8_t            ROWS       = 20;
@@ -21,6 +24,7 @@ int                SPEED      = 500;
 unsigned long long GEN        = 0;
 int                ALIVE      = 0;
 bool               WRAP       = true;
+char               VER[]      = "v2.5.0";
 
 // Functions
 
@@ -29,6 +33,9 @@ void update          (char * BOARD);
 void displayBoard    (char * BOARD);
 void step            (char * BOARD, int i);
 int  err             (std::string e);
+#if LINUX
+void escape      (int signal);
+#endif
 
 // Classes
 
@@ -245,10 +252,15 @@ namespace Command {
 	}
 };
 
+
+
 // Main code
 
 int main (void) {
 	clear();
+	#if WIN
+		SetConsoleCtrlHandler((PHANDLER_ROUTINE)terminate, TRUE);
+	#endif
 
 	char* BOARD = new char[BOARD_SIZE + 1];
 	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
@@ -260,7 +272,7 @@ int main (void) {
 		setColour(static_cast<int>(Colour::WIN_GREEN));
 	#endif
 
-	printf("\t\t\t\tCONWAYS GAME OF LIFE v2.4.1\n");
+	printf("\t\t\t\tCONWAYS GAME OF LIFE %s\n", VER);
 	printf("\t\t\t\t\t- https://github.com/TierTheTora\n");
 	#if LINUX
 		printf("\t\tType \'");
@@ -268,6 +280,10 @@ int main (void) {
 		printf("\' for help.\n\n\n");
 	#elif WIN
 		printf("\t\tType \'help\' for help.\n\n\n");
+	#endif
+
+	#if LINUX
+		std::signal(SIGINT, escape); // If program is terminated (^C)
 	#endif
 
 	while (true) { // Console prompt loop
@@ -289,10 +305,33 @@ int main (void) {
 }
 
 void update (char * BOARD) {
+	#if LINUX
+		disableBufferedInput(); // Turn off line buffering
+		atexit(restoreInput);   // Ensure input settings are restored on exit
+	#endif
 	clear();
+	#if LINUX
+		// Hide cursor
+		printf("\033[?25l"); 
+	#endif
 	char newBoard[BOARD_SIZE]; // Create the next board generation
 
 	while (true) {
+		// Break if Q or X 
+		if (keyPressed()) {
+			if (keyPressed()) {
+				char c = readChar();
+				if (c == 'q' || c == 'x') {
+						restoreInput();	
+						#if LINUX
+							printf("\033[?25h"); // Show cursor
+						#elif WIN
+							showCursor();
+						#endif
+					break;
+				}
+			}
+		}
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
 			int neighbours = countNeighbours(BOARD, i); // Get the neighbouring cells of the current cell
 			if (BOARD[i] == static_cast<char>(State::Alive)) { // If the cell is alive
@@ -304,10 +343,20 @@ void update (char * BOARD) {
 		}
 		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
 		clear();
+		#if LINUX
+			// Hide cursor
+			printf("\033[?25l");
+		#elif WIN
+			hideCursor();
+		#endif
 		++GEN;
 		printf("Generation: %Ld\n", GEN);
 		displayBoard(BOARD);
 		std::this_thread::sleep_for(std::chrono::milliseconds(SPEED)); // Wait 1 second
+		#if LINUX
+			// Show cursor
+			printf("\033[?25h");
+		#endif
 	}
 }
 
@@ -428,4 +477,10 @@ int err (std::string e) {
 	#endif
 	return 1;
 }
-
+#if LINUX
+	void escape (int signal) {
+		std::cout << "\033[?25h"; // Show cursor
+		std::cout.flush(); // Make sure it prints immediately
+		std::exit(signal); // Exit with the received signal
+	}
+#endif

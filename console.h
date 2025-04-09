@@ -6,6 +6,12 @@
 
 #if WIN
 	#include <windows.h>
+	#include <conio.h>
+#endif
+#include <unistd.h>
+#if LINUX
+	#include <termios.h>
+	#include <sys/select.h>
 #endif
 
 // FOREGROUND CONSOLE COLOURS
@@ -40,12 +46,26 @@ enum class State : char {
 
 // FUNCTIONS
 
-int clear() {
+void clear() {
 
-#if LINUX
-	return system("clear");
-#elif WIN
-	return system("cls");
+#if WIN
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	DWORD count;
+	DWORD cellCount;
+	COORD homeCoords = { 0, 0 };
+	
+	if (hConsole == INVALID_HANDLE_VALUE) return;
+	
+	if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) return;
+	cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+	
+	FillConsoleOutputCharacter(hConsole, ' ', cellCount, homeCoords, &count);
+	FillConsoleOutputAttribute(hConsole, csbi.wAttributes, cellCount, homeCoords, &count);
+	SetConsoleCursorPosition(hConsole, homeCoords);
+
+#elif LINUX
+	printf("\033[2J\033[H"); 
 #endif
 
 }
@@ -58,5 +78,89 @@ int clear() {
 		if (st) printf("\e[9m");
 		printf("%s\e[23m\e[22m\e[24m\e[29m", TEXT);
 	}
-#endif
+	termios orig_termios;
+	
+	void disableBufferedInput() {
+		tcgetattr(STDIN_FILENO, &orig_termios); // Get current settings
+		termios new_termios = orig_termios;
+		
+		new_termios.c_lflag &= ~(ICANON | ECHO); // Disable canonical mode and echo
+		tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+	}
+	
+	void restoreInput() {
+		tcsetattr(STDIN_FILENO, TCSANOW, &orig_termios); // Restore settings
+	}
+	
+	bool keyPressed() {
+		timeval tv = {0L, 0L}; // No waiting
+		fd_set fds;
+		FD_ZERO(&fds);
+		FD_SET(STDIN_FILENO, &fds);
+		return select(STDIN_FILENO + 1, &fds, nullptr, nullptr, &tv) > 0;
+	}
+	
+	char readChar() {
+		char c;
+		if (read(STDIN_FILENO, &c, 1) > 0) return c;
+		return 0;
+	}
+#elif WIN
+	void showCursor() {
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_CURSOR_INFO cursorInfo;
+		GetConsoleCursorInfo(hConsole, &cursorInfo);
+		cursorInfo.bVisible = TRUE;
+		SetConsoleCursorInfo(hConsole, &cursorInfo);
+	}
+	void hideCursor() {
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_CURSOR_INFO cursorInfo;
+		GetConsoleCursorInfo(hConsole, &cursorInfo);
+		cursorInfo.bVisible = FALSE;
+		SetConsoleCursorInfo(hConsole, &cursorInfo);
+	}
+	void terminate(DWORD fdwCtrlType) {
+    		if (fdwCtrlType == CTRL_C_EVENT) {
+			showCursor();
+			exit(0);
+		}
+	}
+	void disableBufferedInput() {
+		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+		DWORD mode;
+		
+		// Get the current console mode
+		GetConsoleMode(hStdin, &mode);
+		
+		// Disable line input and echo input
+		mode &= ~ENABLE_LINE_INPUT;
+		mode &= ~ENABLE_ECHO_INPUT;
+		
+		// Set the console mode with the changes
+		SetConsoleMode(hStdin, mode);
+	}
+	
+	void restoreInput() {
+		HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+		DWORD mode;
+		
+		// Get the current console mode
+		GetConsoleMode(hStdin, &mode);
+		
+		// Enable line input and echo input again
+		mode |= ENABLE_LINE_INPUT;
+		mode |= ENABLE_ECHO_INPUT;
+		
+		// Set the console mode with the changes
+		SetConsoleMode(hStdin, mode);
+	}
+	bool keyPressed() {
+		return _kbhit();
+	}
+	
+	char readChar() {
+		return _getch();
+	}
 
+#endif
