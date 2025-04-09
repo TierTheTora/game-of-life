@@ -1,4 +1,4 @@
-# Conways Game of Life v2.4.1
+# Conways Game of Life v2.5.0
 ## Features
  - Compatible for Windows and Linux
  - Multiple console colours and formatting (For linux)
@@ -8,6 +8,7 @@
  - Script file reading
  - Uses # for comments
  - Optional board wrapping
+ - Quit the simulation and return to command mode with 'q' or 'x'
 ## Commands
  - \+ \<int\>, \<int\>    : Place a cell on the board
  - \- \<int\>, \<int\>    : Remove a cell on the board
