@@ -1,4 +1,4 @@
-# Conways Game of Life v2.5.0
+# Conways Game of Life v2.5.2
 ## Features
  - Compatible for Windows and Linux
  - Multiple console colours and formatting (For linux)
@@ -24,6 +24,7 @@
  - clear             : Clear the board
  - fill              : Fill the board with alive cells
  - wrap = \<on/off\>      : Turn board wrapping on or off
+ - save \<file\>           : Save the board as a file
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
