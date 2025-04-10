@@ -78,7 +78,8 @@ namespace Command {
 9.  step <int>        : Step forward a given amount of generations\n \
 10. clear             : Clear the board\n \
 11. fill              : Fill the board with Alive cells\n \
-12. wrap=<on/off>     : Turn board wrapping on or off\n\n");
+12. wrap=<on/off>     : Turn board wrapping on or off\n \
+13. save <file>       : Save the current board as a file\n\n");
 		}
 		else if (cmdo[0] == 'l') {
 			std::regex pattern("^load\\s+(.*)$");
