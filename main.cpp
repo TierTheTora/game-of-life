@@ -107,8 +107,38 @@ namespace Command {
 		else if (cmd == "run") {
 			update(*BOARD);
 		}
-		else if (cmd == "clear") {
-			memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+		else if (cmd[0] == 'c') {
+			std::regex pattern("^clear([0-9]+),([0-9]+),([0-9]+),([0-9]+)$");
+			std::smatch match;
+			if (std::regex_match(cmd, match, pattern)) {
+				int x = std::stoi(match[1].str());
+				int y = std::stoi(match[2].str());
+				int z = std::stoi(match[3].str());
+				int w = std::stoi(match[4].str());
+
+				if (x > z || y > w) {
+					err("Clear coordinates must be top-left to bottom-right");
+				}
+
+
+				int left   = std::min(x, z);
+				int right  = std::max(x, z);
+				int top    = std::min(y, w);
+				int bottom = std::max(y, w);
+
+				for (int r = top; r <= bottom; ++r) {
+					for (int c = left; c <= right; ++c) {
+						if (r >= 1 && r <= ROWS && c >= 1 && c <= COLS) {
+							int i = (r - 1) * COLS + (c - 1);
+							(*BOARD)[i] = static_cast<char>(State::Dead);
+						}
+					}
+				}
+			}
+			else if (cmd == "clear") {
+				memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+			}
+			else err("Invalid command");
 		}
 		else if (cmd == "exit" || cmd == "quit") {
 			#if LINUX
