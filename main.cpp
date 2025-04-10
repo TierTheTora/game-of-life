@@ -23,8 +23,8 @@ int                BOARD_SIZE = ROWS * COLS;
 int                SPEED      = 500;
 unsigned long long GEN        = 0;
 int                ALIVE      = 0;
-bool               WRAP       = true;
-char               VER[]      = "v2.5.0";
+bool               WRAP       = false;
+char               VER[]      = "v2.5.2";
 
 // Functions
 
@@ -135,9 +135,10 @@ namespace Command {
 			}
 		}
 		else if (cmd[0] == 's') { 
-			std::regex pattern("^speed=([0-9]+)$");
-			std::regex ptrn("^size=([0-9]+),([0-9]+)$");
-			std::regex ptrn2("^step([0-9]+)$");
+			std::regex pattern ("^speed=([0-9]+)$");
+			std::regex ptrn    ("^size=([0-9]+),([0-9]+)$");
+			std::regex ptrn2   ("^step([0-9]+)$");
+			std::regex ptrn3   ("^save\\s+(.+)$");
 			std::smatch match;
 			if (cmd == "stat") {
 				ALIVE = 0;
@@ -169,6 +170,19 @@ namespace Command {
 			else if (regex_match(cmd, match, ptrn2)) {
 				int i = std::stoi(match[1].str());
 				step(*BOARD, i);
+			}
+			else if (regex_match(cmdo, match, ptrn3)) {
+				std::string fname = match[1].str();
+				std::ofstream file (fname);
+				file << "size=" << (int)ROWS << "," << (int)COLS << "\n";
+				for (int i = 0; i < BOARD_SIZE; ++i) {
+					if ((*BOARD)[i] == static_cast<char>(State::Alive)) {
+						int row = i / COLS;
+						int col = i % COLS;
+						file << "+" << col+1 << "," << row+1 << "\n";
+					}
+				}
+				file.close();
 			}
 			else {
 				err("Invalid command");
@@ -220,7 +234,7 @@ namespace Command {
 				int col = std::stoi(match[2].str());
 				int index = (row-1) + ((col-1) * COLS);
 
-				if (row >= 1 && row < ROWS && col >= 1 && col < COLS) {
+				if (row >= 1 && row <= ROWS && col >= 1 && col <= COLS) {
 					(*BOARD)[index] = static_cast<char>(State::Alive);
 				}
 				else {
@@ -237,7 +251,7 @@ namespace Command {
 				int col = std::stoi(match[2].str());
 				int index = (row-1) + ((col-1) * COLS);
 
-				if (row >= 1 && row < ROWS && col >= 1 && col < COLS) {
+				if (row >= 1 && row <= ROWS && col >= 1 && col <= COLS) {
 					(*BOARD)[index] = static_cast<char>(State::Dead);
 				}
 				else {
@@ -265,6 +279,15 @@ int main (void) {
 	char* BOARD = new char[BOARD_SIZE + 1];
 	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
 	BOARD[BOARD_SIZE] = '\0';
+	
+	std::string word;
+	std::ifstream file("conway.config");
+	if (file) {
+		while (std::getline(file, word)) {
+			Command::command(word, &BOARD);
+		}
+		file.close();
+	}
 
 	#if LINUX	
 		printf("%s", GREEN);
@@ -314,7 +337,7 @@ void update (char * BOARD) {
 		// Hide cursor
 		printf("\033[?25l"); 
 	#endif
-	char newBoard[BOARD_SIZE]; // Create the next board generation
+	char* newBoard = new char[BOARD_SIZE]; // Create the next board generation
 
 	while (true) {
 		// Break if Q or X 
@@ -335,7 +358,7 @@ void update (char * BOARD) {
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
 			int neighbours = countNeighbours(BOARD, i); // Get the neighbouring cells of the current cell
 			if (BOARD[i] == static_cast<char>(State::Alive)) { // If the cell is alive
-				newBoard[i] = (neighbours == 2 || neighbours == 3) ? static_cast<char>(State::Alive) : static_cast<char>(State::Dead);  // If there are 2 or 3 neighbouring cellswe set the current cell to be alive
+				newBoard[i] = (neighbours == 2 || neighbours == 3) ? static_cast<char>(State::Alive) : static_cast<char>(State::Dead);  // If there are 2 or 3 neighbouring cells we set the current cell to be alive
 			} 
 			else { // If the current cell is dead 
 				newBoard[i] = (neighbours == 3) ? static_cast<char>(State::Alive) : static_cast<char>(State::Dead); // If there are 3 neighbouring cells we set the current cell to be alive
@@ -358,12 +381,13 @@ void update (char * BOARD) {
 			printf("\033[?25h");
 		#endif
 	}
+	delete[] newBoard;
 }
 
 void step (char * BOARD, int i) {
-	char newBoard[BOARD_SIZE]; // Create the next board generation
+	char* newBoard = new char[BOARD_SIZE]; // Create the next board generation
 
-	 for (int j = 0; j < i; ++j) {
+	for (int j = 0; j < i; ++j) {
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
 			int neighbours = countNeighbours(BOARD, i); // Get the neighbouring cells of the current cell
 			if (BOARD[i] == static_cast<char>(State::Alive)) { // If the cell is alive
@@ -376,6 +400,7 @@ void step (char * BOARD, int i) {
 		GEN++;
 		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
 	}
+	delete[] newBoard;
 }
 
 int countNeighbours (const char * BOARD, int i) {
@@ -479,7 +504,8 @@ int err (std::string e) {
 }
 #if LINUX
 	void escape (int signal) {
-		std::cout << "\033[?25h"; // Show cursor
+		printf("\033[?25h"); // Show cursor
+		printf("%s", RESET); // Reset colours
 		std::cout.flush(); // Make sure it prints immediately
 		std::exit(signal); // Exit with the received signal
 	}

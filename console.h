@@ -123,6 +123,7 @@ void clear() {
 	void terminate(DWORD fdwCtrlType) {
     		if (fdwCtrlType == CTRL_C_EVENT) {
 			showCursor();
+			setColour(static_cast<int>(Colour::WIN_RESET));
 			exit(0);
 		}
 	}
