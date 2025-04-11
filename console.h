@@ -165,3 +165,17 @@ void clear() {
 	}
 
 #endif
+
+ssize_t printc (char arg) {
+	return write (1, &arg, 1);
+}
+ssize_t print (const char* arg) {
+	size_t size = strlen (arg);
+	return write (1, arg, size);
+}
+ssize_t printd (const int arg) {
+	char str[64];
+	sprintf(str, "%d", arg); 
+	size_t size = strlen (str);
+	return write (1, &str, size);
+}

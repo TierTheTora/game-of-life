@@ -15,16 +15,20 @@
 #if WIN
 	#include <windows.h>
 #endif
+
 // Globals
 
 uint8_t            ROWS       = 20;
 uint8_t            COLS       = 20;
+uint8_t            OLD_ROWS   = 20;
+uint8_t            OLD_COLS   = 20;
 int                BOARD_SIZE = ROWS * COLS;
+int                OLD_SIZE   = ROWS * COLS;
 int                SPEED      = 500;
 unsigned long long GEN        = 0;
 int                ALIVE      = 0;
 bool               WRAP       = false;
-char               VER[]      = "v2.5.2";
+char               VER[]      = "v2.5.3";
 
 // Functions
 
@@ -38,9 +42,13 @@ void escape      (int signal);
 #endif
 
 // Classes
+struct boardReturnStruct {
+	char *BOARD;
+	char *BOARD_OLD;
+} BOARD_RETURN_STRUCT;
 
 namespace Command {
-	void command(std::string cmd, char ** BOARD) {
+	 void command(std::string cmd, char * BOARD, char * BOARD_OLD) {
 		// Convert cmd to be lowercase
 		for (char& c : cmd) {
 			c = std::tolower(c); 
@@ -79,7 +87,8 @@ namespace Command {
 10. clear             : Clear the board\n \
 11. fill              : Fill the board with Alive cells\n \
 12. wrap=<on/off>     : Turn board wrapping on or off\n \
-13. save <file>       : Save the current board as a file\n\n");
+13. save <file>       : Save the current board as a file\n \
+14. restore           : Restore the board from before the run command\n\n");
 		}
 		else if (cmdo[0] == 'l') {
 			std::regex pattern("^load\\s+(.*)$");
@@ -92,7 +101,7 @@ namespace Command {
 				std::ifstream read(file);
 				if (read) {
 					while (std::getline(read, word)) {
-						Command::command(word, BOARD);
+						Command::command(word, BOARD, BOARD_OLD);
 					}
 					read.close();
 				}
@@ -103,10 +112,29 @@ namespace Command {
 			else err("Invalid command");
 		}
 		else if (cmd == "board") {
-			displayBoard(*BOARD);
+			displayBoard(BOARD);
+			fflush(stdout);
 		}
-		else if (cmd == "run") {
-			update(*BOARD);
+		else if (cmd[0] == 'r') {
+			if (cmd == "run") {
+				OLD_ROWS = ROWS;
+				OLD_COLS = COLS;
+				OLD_SIZE = ROWS * COLS;
+				delete[] BOARD_OLD;
+				BOARD_OLD = new char[OLD_SIZE + 1];
+				BOARD_OLD[OLD_SIZE] = '\0';
+				memcpy(BOARD_OLD, BOARD, OLD_SIZE * sizeof(char));
+				update(BOARD);
+			}
+			else if (cmd == "restore") {
+				delete[] BOARD;
+				BOARD = new char[OLD_SIZE + 1];
+				BOARD[OLD_SIZE] = '\0';
+				BOARD_SIZE = OLD_SIZE;
+				memcpy(BOARD, BOARD_OLD, OLD_SIZE * sizeof(char));
+				COLS = OLD_COLS;
+				ROWS = OLD_ROWS;
+			}
 		}
 		else if (cmd[0] == 'c') {
 			std::regex pattern("^clear([0-9]+),([0-9]+),([0-9]+),([0-9]+)$");
@@ -131,13 +159,13 @@ namespace Command {
 					for (int c = left; c <= right; ++c) {
 						if (r >= 1 && r <= ROWS && c >= 1 && c <= COLS) {
 							int i = (r - 1) * COLS + (c - 1);
-							(*BOARD)[i] = static_cast<char>(State::Dead);
+							(BOARD)[i] = static_cast<char>(State::Dead);
 						}
 					}
 				}
 			}
 			else if (cmd == "clear") {
-				memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+				memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
 			}
 			else err("Invalid command");
 		}
@@ -147,7 +175,7 @@ namespace Command {
 			#elif WIN
 				setColour(static_cast<int>(Colour::WIN_RESET));
 			#endif
-			delete[] *BOARD;
+			delete[] BOARD;
 			exit(0);
 		}
 		else if (cmd[0] == 'w') {
@@ -174,7 +202,7 @@ namespace Command {
 			if (cmd == "stat") {
 				ALIVE = 0;
 				for (int i = 0; i < BOARD_SIZE; ++i) { // Iterate thrugh board
-					if ((*BOARD)[i] == static_cast<char>(State::Alive)) { // If cell is alive
+					if ((BOARD)[i] == static_cast<char>(State::Alive)) { // If cell is alive
 						++ALIVE;
 					}
 				}
@@ -192,22 +220,22 @@ namespace Command {
 				COLS = std::stoi(match[2].str());
 				BOARD_SIZE = ROWS * COLS;
 				
-				delete[] *BOARD; // Delete old board
-				
-				*BOARD = new char[BOARD_SIZE + 1];
-				memset(*BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
-				(*BOARD)[BOARD_SIZE] = '\0';
+				delete[] BOARD; // Delete old board
+
+				BOARD = new char[BOARD_SIZE + 1];
+				memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
+				(BOARD)[BOARD_SIZE] = '\0';
 			}
 			else if (regex_match(cmd, match, ptrn2)) {
 				int i = std::stoi(match[1].str());
-				step(*BOARD, i);
+				step(BOARD, i);
 			}
 			else if (regex_match(cmdo, match, ptrn3)) {
 				std::string fname = match[1].str();
 				std::ofstream file (fname);
 				file << "size=" << (int)ROWS << "," << (int)COLS << "\n";
 				for (int i = 0; i < BOARD_SIZE; ++i) {
-					if ((*BOARD)[i] == static_cast<char>(State::Alive)) {
+					if ((BOARD)[i] == static_cast<char>(State::Alive)) {
 						int row = i / COLS;
 						int col = i % COLS;
 						file << "+" << col+1 << "," << row+1 << "\n";
@@ -242,17 +270,17 @@ namespace Command {
 					for (int c = left; c <= right; ++c) {
 						if (r >= 1 && r <= ROWS && c >= 1 && c <= COLS) {
 							int i = (r - 1) * COLS + (c - 1);
-							(*BOARD)[i] = static_cast<char>(State::Alive);
+							(BOARD)[i] = static_cast<char>(State::Alive);
 						}
 					}
 				}
 			
 			}
 			else if (cmd == "fill") {
-				delete[] *BOARD;
-				*BOARD = new char[BOARD_SIZE + 1];
-				memset(*BOARD, static_cast<char>(State::Alive), BOARD_SIZE);
-				(*BOARD)[BOARD_SIZE] = '\0';
+				delete[] BOARD;
+				BOARD = new char[BOARD_SIZE + 1];
+				memset(BOARD, static_cast<char>(State::Alive), BOARD_SIZE);
+				(BOARD)[BOARD_SIZE] = '\0';
 			}
 			else err("Invalid command");
 		}
@@ -266,7 +294,7 @@ namespace Command {
 				int index = (row-1) + ((col-1) * COLS);
 
 				if (row >= 1 && row <= ROWS && col >= 1 && col <= COLS) {
-					(*BOARD)[index] = static_cast<char>(State::Alive);
+					(BOARD)[index] = static_cast<char>(State::Alive);
 				}
 				else {
 					err("Coordinates out of bounds");
@@ -283,7 +311,7 @@ namespace Command {
 				int index = (row-1) + ((col-1) * COLS);
 
 				if (row >= 1 && row <= ROWS && col >= 1 && col <= COLS) {
-					(*BOARD)[index] = static_cast<char>(State::Dead);
+					(BOARD)[index] = static_cast<char>(State::Dead);
 				}
 				else {
 					err("Coordinates out of bounds");
@@ -294,6 +322,9 @@ namespace Command {
 		else {
 			err("Invalid command");
 		}
+
+		BOARD_RETURN_STRUCT.BOARD = BOARD;
+		BOARD_RETURN_STRUCT.BOARD_OLD = BOARD_OLD;
 	}
 };
 
@@ -311,11 +342,15 @@ int main (void) {
 	memset(BOARD, static_cast<char>(State::Dead), BOARD_SIZE);
 	BOARD[BOARD_SIZE] = '\0';
 	
+	char* BOARD_OLD = new char[BOARD_SIZE + 1];
+	memset(BOARD_OLD, static_cast<char>(State::Dead), BOARD_SIZE);
+	BOARD_OLD[BOARD_SIZE] = '\0';
+	
 	std::string word;
 	std::ifstream file("conway.config");
 	if (file) {
 		while (std::getline(file, word)) {
-			Command::command(word, &BOARD);
+			Command::command(word, BOARD, BOARD_OLD);
 		}
 		file.close();
 	}
@@ -345,7 +380,9 @@ int main (void) {
 		printf("> ");
 		std::getline(std::cin, cmd);
 
-		Command::command(cmd, &BOARD);
+		Command::command(cmd, BOARD, BOARD_OLD);
+		BOARD = BOARD_RETURN_STRUCT.BOARD;
+		BOARD_OLD = BOARD_RETURN_STRUCT.BOARD_OLD;
 		//displayBoard(BOARD);
 	}
 
@@ -356,6 +393,7 @@ int main (void) {
 		setColour(static_cast<int>(Colour::WIN_RESET));
 	#endif
 	delete[] BOARD;
+	delete[] BOARD_OLD;
 }
 
 void update (char * BOARD) {
@@ -386,6 +424,7 @@ void update (char * BOARD) {
 				}
 			}
 		}
+		clear();
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
 			int neighbours = countNeighbours(BOARD, i); // Get the neighbouring cells of the current cell
 			if (BOARD[i] == static_cast<char>(State::Alive)) { // If the cell is alive
@@ -396,7 +435,6 @@ void update (char * BOARD) {
 			}
 		}
 		memcpy(BOARD, newBoard, BOARD_SIZE); // Set the board to the next generation
-		clear();
 		#if LINUX
 			// Hide cursor
 			printf("\033[?25l");
@@ -406,6 +444,7 @@ void update (char * BOARD) {
 		++GEN;
 		printf("Generation: %Ld\n", GEN);
 		displayBoard(BOARD);
+		fflush(stdout);
 		std::this_thread::sleep_for(std::chrono::milliseconds(SPEED)); // Wait 1 second
 		#if LINUX
 			// Show cursor
@@ -466,54 +505,64 @@ int countNeighbours (const char * BOARD, int i) {
 
 void displayBoard (char * BOARD) {
 	printf("\n");
+	bool gbo = GEN > 1;
+	#if LINUX
+		if (gbo) printf("\033[%dA", COLS); // Ansi escape for lines up
+	#endif
 	for (int j = 0; j < BOARD_SIZE; ++j) { // Iterate through each cell
 		int rsp = std::to_string(j).length();
 		int csp = std::to_string(j).length();
 
 		if (!j) { // If j == 0
-			printf("  ");
+			print("  ");
 			for (int k = 1; k <= COLS; ++k) {
-				printf("%d ", k % 10);
+				printd(k % 10);
+				print(" ");
 			}
-			printf("\n");
+			printc('\n');
 		}
 		if (j % COLS == 0) {
 			#if LINUX
-				printf("%s", GREEN);
+				print(GREEN);
 			#elif WIN
 				setColour(static_cast<int>(Colour::WIN_GREEN));
 			#endif
-			printf("%d ", (j / COLS + 1) % 10);
+			printd((j / COLS + 1) % 10);
+			printc(' ');
 			#if LINUX
-				printf("%s", GREY);
+				print(GREY);
 			#elif WIN
 				setColour(static_cast<int>(Colour::WIN_GREY));
 			#endif
 		}
 		#if LINUX
-			printf("%s", GREY);
-			if (BOARD[j] == static_cast<char>(State::Alive)) printf("%s", YELLOW);
+			print(GREY);
+			if (BOARD[j] == static_cast<char>(State::Alive)) print(YELLOW);
 		#elif WIN
 			setColour(static_cast<int>(Colour::WIN_GREY));
 			if (BOARD[j] == static_cast<char>(State::Alive)) setColour(static_cast<int>(Colour::WIN_YELLOW));
 		#endif
 		
-		printf("%c ", BOARD[j]);
+		printc(BOARD[j]);
+		printc(' ');
 		
 		#if LINUX
-			printf("%s", GREY);
+			print(GREY);
 		#elif WIN
 			setColour(static_cast<int>(Colour::WIN_GREY));
 		#endif
-		if ((j + 1) % COLS == 0) { // If we are at the end of the first row
-			printf("\n");
+		if (!((j + 1) % COLS)) { // If we are at the end of the first row
+			printc('\n');
 		}
 	}
-	printf("\n");
+	printc('\n');
 	#if LINUX
-		printf("%s", GREEN);
+		print(GREEN);
 	#elif WIN 
 		setColour(static_cast<int>(Colour::WIN_GREEN));
+	#endif
+	#if LINUX
+		if (gbo) printf("\033[%dB", COLS); // Lines down
 	#endif
 }
 
