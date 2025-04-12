@@ -1,4 +1,4 @@
-# Conways Game of Life v2.5.4
+# Conways Game of Life v2.7.0
 ## Features
  - Compatible for Windows and Linux
  - Multiple console colours and formatting (For linux)
@@ -26,6 +26,9 @@
  - wrap = \<on/off\>      : Turn board wrapping on or off
  - save \<file\>           : Save the board as a file
  - restore            : Restore the board from before the run
+ - random \<int\> : Randomize the board
+ - pattern \<name\> : Load a predefined pattern
+ - mirror : Mirror the board
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
