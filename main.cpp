@@ -1,7 +1,7 @@
 /*
  * Created by github.com/TierTheTora
  * Lisence MIT
- * Version 2.7.0
+ * Version 2.7.1
  * Repository github.com/TierTheTora/game-of-life
  */
 
@@ -47,7 +47,8 @@ char helps[][1024] = {
    "restore : Get the board state back from before the simulation ran\n",
    "random <int> : Set the board to random cells | int: set the dead space (big int = lots of dead area)\n",
    "pattern (name) : Load a predefined pattern onto the board | Get the a list patterns\n",
-   "mirror <pos> : Mirror the current board (v | h | vertical | horizontal)\n"
+   "mirror <pos> : Mirror the current board (v | h | vertical | horizontal)\n",
+   "invert : Invert each cell of the board: dead -> alive, alive -> dead\n"
 };
 uint8_t            ROWS       = 20;
 uint8_t            COLS       = 20;
@@ -59,7 +60,7 @@ int                SPEED      = 500;
 unsigned long long GEN        = 0;
 int                ALIVE      = 0;
 bool               WRAP       = false;
-char               VER[]      = "v2.7.0";
+char               VER[]      = "v2.7.1";
 
 // Functions
 
@@ -125,7 +126,8 @@ namespace Command {
 16. restore           : Restore the board from before the run command\n \
 17. random <int>      : Get a random board\n \
 18. pattern <name>    : Load a pattern\n \
-19. mirror <pos>      : Mirror the current board\n\n");
+19. mirror <pos>      : Mirror the current board\n \
+20. invert            : Invert each cell of the board\n\n");
             }
             else if (std::regex_match(cmdo, match, regex)) {
                std::unordered_map<std::string, int> KEY = {
@@ -148,7 +150,8 @@ namespace Command {
                   {"restore", 15},
                   {"random", 16},
                   {"pattern", 17},
-                  {"mirror", 18}
+                  {"mirror", 18},
+                  {"invert", 19}
                };
                std::string helpCmd = match[1].str();
                auto it = KEY.find(helpCmd);
