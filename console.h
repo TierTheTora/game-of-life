@@ -37,13 +37,6 @@
 	}
 #endif
 
-// CELLS
-
-enum class State : char {
-	Alive = '#',
-	Dead  = '.'
-};
-
 // FUNCTIONS
 
 void clear() {
