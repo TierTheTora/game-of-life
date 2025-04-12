@@ -177,24 +177,6 @@ namespace Command {
                      }
                   }
                }
-               int index = std::stoi(match[1].str());
-               page(index-1);
-            }
-			}
-         else if (cmd[0] == 'm') {
-            std::regex pattern("^mirror\\s*(h|v|horizontal|vertical)$");
-            std::smatch match;
-            if (std::regex_match(cmdo, match, pattern)) {
-               std::string axis = match[1].str();
-               if (axis == "h" || axis == "horizontal") {
-                  for (int r = 0; r < ROWS / 2; ++r) {
-                     for (int c = 0; c < COLS; ++c) {
-                        int top = r * COLS + c;
-                        int bottom = (ROWS - 1 - r) * COLS + c;
-                        std::swap(BOARD[top], BOARD[bottom]);
-                     }
-                  }
-               }
                else if (axis == "v" || axis == "vertical") {
                   for (int r = 0; r < ROWS; ++r) {
                      for (int c = 0; c < COLS / 2; ++c) {
