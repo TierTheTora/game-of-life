@@ -9,6 +9,8 @@
  - Uses # for comments
  - Optional board wrapping
  - Quit the simulation and return to command mode with 'q' or 'x'
+ - Rotate board horizontaly or verticaly with 'h' and 'v'
+ - Invert with 'i'
 ## Commands
  - \+ \<int\>, \<int\>    : Place a cell on the board
  - \- \<int\>, \<int\>    : Remove a cell on the board
