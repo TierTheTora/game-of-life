@@ -1,4 +1,4 @@
-# Conways Game of Life v2.7.1
+# Conways Game of Life v2.7.3
 ## Features
  - Compatible for Windows and Linux
  - Multiple console colours and formatting (For linux)
@@ -29,7 +29,8 @@
  - random \<int\> : Randomize the board
  - pattern \<name\> : Load a predefined pattern
  - mirror : Mirror the board
- - Invert : Invert each of the boards cells
+ - invert : Invert each of the boards cells
+ - gen \<int\> : Set the board generation
 ## Rules
 1. Any live cell with fewer than two live neighbours dies, as if caused by underpopulation.
 2. Any live cell with two or three live neighbours lives on to the next generation.
