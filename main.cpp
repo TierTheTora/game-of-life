@@ -1,7 +1,7 @@
 /*
  * Created by github.com/TierTheTora
  * Lisence MIT
- * Version 2.7.1
+ * Version 2.7.3
  * Repository github.com/TierTheTora/game-of-life
  */
 
@@ -61,7 +61,7 @@ int                SPEED      = 500;
 unsigned long long GEN        = 0;
 int                ALIVE      = 0;
 bool               WRAP       = false;
-char               VER[]      = "v2.7.1";
+char               VER[]      = "v2.7.3";
 
 // Functions
 
@@ -72,7 +72,7 @@ void step            (char * BOARD, int i);
 int  err             (std::string e);
 int  page            (int i);
 #if LINUX
-void escape      (int signal);
+   void escape       (int signal);
 #endif
 
 // Classes
@@ -604,18 +604,44 @@ void update (char * BOARD) {
 	while (true) {
 		// Break if Q or X 
 		if (keyPressed()) {
-			if (keyPressed()) {
-				char c = readChar();
-				if (c == 'q' || c == 'x') {
-						restoreInput();	
-						#if LINUX
-							printf("\033[?25h"); // Show cursor
-						#elif WIN
-							showCursor();
-						#endif
-					break;
-				}
+			char c = readChar();
+			if (c == 'q' || c == 'x') {
+				restoreInput();	
+				#if LINUX
+					printf("\033[?25h"); // Show cursor
+				#elif WIN
+				   showCursor();
+				#endif
+				break;
 			}
+         else if (c == 'h') {
+            for (int r = 0; r < ROWS / 2; ++r) {
+               for (int c = 0; c < COLS; ++c) {
+                  int top = r * COLS + c;
+                  int bottom = (ROWS - 1 - r) * COLS + c;
+                  std::swap(BOARD[top], BOARD[bottom]);
+               }
+            }
+         }
+         else if (c == 'v') {
+            for (int r = 0; r < ROWS; ++r) {
+               for (int c = 0; c < COLS / 2; ++c) {
+                  int left = r * COLS + c;
+                  int right = r * COLS + (COLS - 1 - c);
+                  std::swap(BOARD[left], BOARD[right]);
+               }
+            }
+         }
+         else if (c == 'i') {
+            for (int i = 0; i < BOARD_SIZE; ++i) {
+               if (BOARD[i] == '#') {
+                  BOARD[i] = '.';
+               }
+               else {
+                  BOARD[i] = '#';
+               }
+            }
+         }
 		}
 		clear();
 		for (int i = 0; i < BOARD_SIZE; ++i) { // Loop through each cell
